@@ -137,6 +137,16 @@ const cpLeadService = {
       };
     }
   },
+  
+    getAuthorizedProperties: async () => {
+    try {
+      const response = await api.get('/cp/properties/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch properties:', error);
+      return [];
+    }
+  },
 
   /**
    * Get lead status options
@@ -154,6 +164,8 @@ const cpLeadService = {
       { value: 'not_interested', label: 'Not Interested', color: '#6c757d' }
     ];
   },
+
+  
 
   /**
    * Get status color

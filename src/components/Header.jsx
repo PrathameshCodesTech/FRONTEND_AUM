@@ -93,7 +93,7 @@ const Header = () => {
         
        <nav className="nav-menu">
   <Link to="/properties" className={`nav-link ${location.pathname === '/properties' ? 'active' : ''}`}>
-    Properties
+    Live opportunities
   </Link>
 
   {isAuthenticated && (

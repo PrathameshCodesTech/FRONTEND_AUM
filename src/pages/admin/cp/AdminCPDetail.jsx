@@ -35,10 +35,20 @@ const AdminCPDetail = () => {
   const [hasPermanentInvite, setHasPermanentInvite] = useState(false);
   const [inviteData, setInviteData] = useState(null);
 
+  const [leads, setLeads] = useState([]);
+  const [loadingLeads, setLoadingLeads] = useState(false);
+
+
   useEffect(() => {
     fetchCPDetail();
     fetchAuthorizedProperties();
   }, [cpId]);
+
+  useEffect(() => {
+  if (activeTab === 'lead') {
+    fetchCPLeads();
+  }
+}, [activeTab]);
 
   const fetchCPDetail = async () => {
     try {
@@ -125,6 +135,30 @@ const AdminCPDetail = () => {
       setCreatingInvite(false);
     }
   };
+
+ const fetchCPLeads = async () => {
+  try {
+    setLoadingLeads(true);
+    const response = await adminService.getCPLeads(cpId);
+
+    console.log('📋 CP Leads Response:', response); // Debug log
+
+    if (response.success) {
+      setLeads(response.results || []);
+    } else {
+      console.error('Failed to fetch leads:', response.error);
+      toast.error(response.error || 'Failed to load leads');
+      setLeads([]);
+    }
+  } catch (error) {
+    console.error('❌ Error fetching leads:', error);
+    toast.error('Failed to load leads');
+    setLeads([]);
+  } finally {
+    setLoadingLeads(false);
+  }
+};
+
 
 
   const handleRevokeProperty = async (propertyId, propertyName) => {
@@ -364,6 +398,13 @@ const AdminCPDetail = () => {
             Commissions
           </button>
 
+           <button
+            className={`tab ${activeTab === 'lead' ? 'active' : ''}`}
+            onClick={() => setActiveTab('lead')}
+          >
+            Lead
+          </button>
+
         </div>
 
         {/* Tab Content */}
@@ -586,6 +627,59 @@ const AdminCPDetail = () => {
           {activeTab === 'commissions' && (
             <CPCommissionsTab cpId={cpId} cpCode={cp.cp_code} />
           )}
+
+
+          {/* Leads Tab */}
+{activeTab === 'lead' && (
+  <div className="leads-tab">
+    <h3>Leads Added by CP</h3>
+
+    {loadingLeads ? (
+      <div className="loading-state-small">
+        <div className="spinner-small"></div>
+        <p>Loading leads...</p>
+      </div>
+    ) : leads.length === 0 ? (
+      <div className="empty-state-properties">
+        <FiUsers size={48} color="#ccc" />
+        <h4>No Leads Found</h4>
+        <p>This CP has not added any leads yet.</p>
+      </div>
+    ) : (
+      <div className="properties-table-container">
+        <table className="properties-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Property</th>
+              <th>Status</th>
+              <th>Created On</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map((lead) => (
+              <tr key={lead.id}>
+                <td>{lead.name}</td>
+                <td>{lead.phone}</td>
+                <td>{lead.email || '-'}</td>
+                <td>{lead.property?.name || '-'}</td>
+                <td>
+                  <span className={`status-badge-sm ${lead.status}`}>
+                    {lead.status}
+                  </span>
+                </td>
+                <td>{formatDate(lead.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+)}
+
         </div>
       </div>
 

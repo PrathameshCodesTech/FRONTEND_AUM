@@ -1,9 +1,4 @@
-// AdminCPApplications.jsx
-// =====================================================
-// Admin CP Applications Page
-// Review and approve/reject CP applications
-// =====================================================
-
+// AdminCPApplications.jsx - HYBRID SOLUTION
 import React, { useState, useEffect } from 'react';
 import { FiFilter, FiSearch } from 'react-icons/fi';
 import CPApplicationCard from '../../../components/admin/cp/CPApplicationCard';
@@ -12,7 +7,7 @@ import adminService from '../../../services/adminService';
 import '../../../styles/admin/cp/AdminCPPages.css';
 
 const AdminCPApplications = () => {
-  const [applications, setApplications] = useState([]);
+  const [allApplications, setAllApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,43 +20,64 @@ const AdminCPApplications = () => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
 
+  // ✅ FIXED: Fetch ALL applications by fetching each status separately
   useEffect(() => {
-    fetchApplications();
-  }, [statusFilter]); // Refetch when status filter changes
+    fetchAllApplications();
+  }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [applications, searchQuery]);
+  }, [allApplications, statusFilter, searchQuery]);
 
-  const fetchApplications = async () => {
+  // ✅ HYBRID FIX: Fetch all statuses separately and combine them
+  const fetchAllApplications = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const filters = {};
-      if (statusFilter !== 'all') {
-        filters.status = statusFilter;
-      }
+      console.log('🔍 Fetching ALL applications from all statuses');
       
-      const response = await adminService.getCPApplications(filters);
+      // ✅ Fetch each status separately
+      const [pendingRes, inProgressRes, completedRes, rejectedRes] = await Promise.all([
+        adminService.getCPApplications({ status: 'pending' }),
+        adminService.getCPApplications({ status: 'in_progress' }),
+        adminService.getCPApplications({ status: 'completed' }),
+        adminService.getCPApplications({ status: 'rejected' })
+      ]);
       
-      if (response.success) {
-        setApplications(response.results);
-      } else {
-        setError('Failed to load applications');
-      }
+      // ✅ Combine all results
+      const combined = [
+        ...(pendingRes.success ? pendingRes.results : []),
+        ...(inProgressRes.success ? inProgressRes.results : []),
+        ...(completedRes.success ? completedRes.results : []),
+        ...(rejectedRes.success ? rejectedRes.results : [])
+      ];
+      
+      console.log('📦 Combined applications:', combined.length, 'items');
+      console.log('   - Pending:', pendingRes.results?.length || 0);
+      console.log('   - In Progress:', inProgressRes.results?.length || 0);
+      console.log('   - Completed:', completedRes.results?.length || 0);
+      console.log('   - Rejected:', rejectedRes.results?.length || 0);
+      
+      setAllApplications(combined);
+      
     } catch (err) {
       setError('Failed to load applications');
-      console.error('Error fetching applications:', err);
+      console.error('❌ Error fetching applications:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const applyFilters = () => {
-    let filtered = [...applications];
+    let filtered = [...allApplications];
 
-    // Search filter (local)
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(app => app.onboarding_status === statusFilter);
+    }
+
+    // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(app => 
@@ -82,17 +98,16 @@ const AdminCPApplications = () => {
   };
 
   const handleApprovalSubmit = async (decision) => {
-    // Refresh applications after approval/rejection
-    await fetchApplications();
+    await fetchAllApplications();
     setShowApprovalModal(false);
     setSelectedApplication(null);
   };
 
   // Calculate counts
-  const pendingCount = applications.filter(a => a.onboarding_status === 'pending').length;
-  const inProgressCount = applications.filter(a => a.onboarding_status === 'in_progress').length;
-  const completedCount = applications.filter(a => a.onboarding_status === 'completed').length;
-  const rejectedCount = applications.filter(a => a.onboarding_status === 'rejected').length;
+  const pendingCount = allApplications.filter(a => a.onboarding_status === 'pending').length;
+  const inProgressCount = allApplications.filter(a => a.onboarding_status === 'in_progress').length;
+  const completedCount = allApplications.filter(a => a.onboarding_status === 'completed').length;
+  const rejectedCount = allApplications.filter(a => a.onboarding_status === 'rejected').length;
 
   return (
     <div className="admin-cp-applications-page">
@@ -133,7 +148,7 @@ const AdminCPApplications = () => {
               className={`status-tab-admin ${statusFilter === 'all' ? 'active' : ''}`}
               onClick={() => setStatusFilter('all')}
             >
-              All ({applications.length})
+              All ({allApplications.length})
             </button>
             <button
               className={`status-tab-admin ${statusFilter === 'pending' ? 'active' : ''}`}
@@ -177,7 +192,7 @@ const AdminCPApplications = () => {
         {error && (
           <div className="error-banner-admin">
             <span>{error}</span>
-            <button onClick={fetchApplications}>Retry</button>
+            <button onClick={fetchAllApplications}>Retry</button>
           </div>
         )}
 
@@ -201,7 +216,7 @@ const AdminCPApplications = () => {
                   className="btn-clear-filters-admin"
                   onClick={() => {
                     setSearchQuery('');
-                    setStatusFilter('pending');
+                    setStatusFilter('all');
                   }}
                 >
                   Clear Filters

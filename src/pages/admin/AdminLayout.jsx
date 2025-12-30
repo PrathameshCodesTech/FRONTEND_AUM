@@ -31,7 +31,8 @@ const AdminLayout = () => {
         currentPath={location.pathname}
       />
       
-      <div className={`admin-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* ✅ CRITICAL: This className must include sidebar-collapsed when sidebar is collapsed */}
+      <div className={`admin-main${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
         <AdminHeader 
           user={user} 
           onLogout={handleLogout}

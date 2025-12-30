@@ -104,26 +104,34 @@
   color: #000000;
 }
 
-/* Table Actions */
+/* ✅ FIXED: Table Actions - Larger buttons with better icon sizing */
 .table-actions {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
+  align-items: center;
 }
 
 .btn-action {
-  padding: 0.5rem;
+  padding: 0.625rem;  /* ✅ Increased from 0.5rem */
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;  /* ✅ Slightly larger radius */
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 0.9rem;
+  width: 38px;  /* ✅ Increased from 32px */
+  height: 38px;  /* ✅ Increased from 32px */
+  font-size: 1.1rem;  /* ✅ Increased from 0.9rem */
   font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  /* ✅ Added subtle shadow */
+}
+
+.btn-action svg {
+  width: 18px;  /* ✅ Explicit SVG sizing */
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .btn-view {
@@ -133,7 +141,8 @@
 
 .btn-view:hover {
   background: #5568d3;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 .btn-approve {
@@ -143,7 +152,8 @@
 
 .btn-approve:hover {
   background: #218838;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
 .btn-suspend {
@@ -153,7 +163,8 @@
 
 .btn-suspend:hover {
   background: #e68900;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
 }
 
 .btn-reject {
@@ -163,7 +174,13 @@
 
 .btn-reject:hover {
   background: #c82333;
-  transform: scale(1.1);
+  transform: scale(1.08);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* ✅ Active state for better feedback */
+.btn-action:active {
+  transform: scale(0.95);
 }
 
 /* Primary Button */
@@ -222,5 +239,16 @@
   .btn-primary-admin {
     width: 100%;
     justify-content: center;
+  }
+  
+  /* ✅ Slightly smaller buttons on mobile but still visible */
+  .btn-action {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .btn-action svg {
+    width: 16px;
+    height: 16px;
   }
 }

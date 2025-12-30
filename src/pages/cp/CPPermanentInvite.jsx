@@ -62,37 +62,38 @@ const CPPermanentInvite = () => {
     cpInviteService.shareViaEmail(data.invite_link, data.cp_name);
   };
 
-  // 🆕 NEW: Handle send email invite
-  const handleSendEmail = async () => {
-    // Validate email
-    if (!emailRecipient.trim()) {
-      toast.error('Please enter an email address');
-      return;
-    }
+ const handleSendEmail = async () => {
+  if (!emailRecipient.trim()) {
+    toast.error('Please enter an email address');
+    return;
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailRecipient)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(emailRecipient)) {
+    toast.error('Please enter a valid email address');
+    return;
+  }
 
-    setSendingEmail(true);
-    try {
-      const response = await cpInviteService.sendInviteEmail(emailRecipient);
-      
-      if (response.success) {
-        toast.success(`✅ Invite sent to ${emailRecipient}!`);
-        setEmailRecipient(''); // Clear input
-      } else {
-        toast.error(response.error || 'Failed to send email');
-      }
-    } catch (error) {
-      toast.error(error.error || 'Failed to send email');
-      console.error('Email send error:', error);
-    } finally {
-      setSendingEmail(false);
+  setSendingEmail(true);
+  try {
+    const response = await cpInviteService.sendInviteEmail({
+      email: emailRecipient
+    });
+
+    if (response.success) {
+      toast.success(`✅ Invite sent to ${emailRecipient}!`);
+      setEmailRecipient('');
+    } else {
+      toast.error(response.error || 'Failed to send email');
     }
-  };
+  } catch (error) {
+    toast.error(error.error || 'Failed to send email');
+    console.error('Email send error:', error);
+  } finally {
+    setSendingEmail(false);
+  }
+};
+
 
   // Handle Enter key press in email input
   const handleEmailKeyPress = (e) => {

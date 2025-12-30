@@ -144,30 +144,31 @@ const fetchUsers = async () => {
       key: 'role_name',
       label: 'Role',
       sortable: false,
-      render: (value) => value?.name || 'N/A'
+      render: (value) => value || 'N/A'
+
     },
-    {
-      key: 'is_verified',
-      label: 'Verified',
-      sortable: true,
-      render: (value) => (
-        <StatusBadge 
-          status={value ? 'verified' : 'pending'} 
-          label={value ? 'Verified' : 'Not Verified'}
-        />
-      )
-    },
-    {
-      key: 'is_suspended',
-      label: 'Status',
-      sortable: true,
-      render: (value) => (
-        <StatusBadge 
-          status={value ? 'suspended' : 'active'} 
-          label={value ? 'Suspended' : 'Active'}
-        />
-      )
-    },
+    // {
+    //   key: 'is_verified',
+    //   label: 'Verified',
+    //   sortable: true,
+    //   // render: (value) => (
+    //   //   <StatusBadge 
+    //   //     status={value ? 'verified' : 'pending'} 
+    //   //     label={value ? 'Verified' : 'Not Verified'}
+    //   //   />
+    //   // )
+    // },
+    // {
+    //   key: 'is_suspended',
+    //   label: 'Status',
+    //   sortable: true,
+    //   // render: (value) => (
+    //   //   <StatusBadge 
+    //   //     status={value ? 'suspended' : 'active'} 
+    //   //     label={value ? 'Suspended' : 'Active'}
+    //   //   />
+    //   // )
+    // },
     {
       key: 'date_joined',
       label: 'Joined',
@@ -238,6 +239,13 @@ const fetchUsers = async () => {
           <h1>User Management</h1>
           <p className="page-subtitle">Manage and monitor all platform users</p>
         </div>
+         {/* Add User Button */}
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/admin/users/create')}
+          >
+            + Add User
+          </button>
       </div>
 
       {/* Filters */}

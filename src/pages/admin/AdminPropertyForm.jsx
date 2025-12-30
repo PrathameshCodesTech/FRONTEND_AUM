@@ -643,7 +643,7 @@ const AdminPropertyForm = () => {
         <div className="form-section">
           <h3 className="section-title">Returns & Tenure</h3>
           <div className="form-grid">
-            <div className="form-group">
+            {/* <div className="form-group">
               <label>Expected IRR (%)</label>
               <input
                 type="number"
@@ -669,12 +669,11 @@ const AdminPropertyForm = () => {
                 max="100"
                 step="0.01"
               />
-            </div>
+            </div> */}
 
             <div className="form-group">
               <label>Potential Gain (%)</label>
               <input
-                type="number"
                 name="potential_gain"
                 value={formData.potential_gain}
                 onChange={handleInputChange}
@@ -697,15 +696,16 @@ const AdminPropertyForm = () => {
               />
             </div>
 
-            <div className="form-group">
-              <label>Lock-in Period (months)</label>
+           <div className="form-group">
+              <label>Subscription (%)</label>
               <input
-                type="number"
-                name="lock_in_period"
-                value={formData.lock_in_period}
+                name="expected_return_percentage"
+                value={formData.expected_return_percentage}
                 onChange={handleInputChange}
-                placeholder="e.g., 12"
+                placeholder="e.g., 13.5"
                 min="0"
+                max="100"
+                step="0.01"
               />
             </div>
 

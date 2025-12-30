@@ -9,7 +9,7 @@ const cpInviteService = {
     } catch (error) {
       throw error.response?.data || { error: 'Failed to get permanent invite' };
     }
-  },
+  }, 
 
   // Get list of signups via invite
   getInviteSignups: async (status = null, search = null) => {
@@ -26,12 +26,35 @@ const cpInviteService = {
   },
 
   // 🆕 NEW: Send invite via email
-  sendInviteEmail: async (email) => {
+  // Send invite
+sendInviteEmail: async (inviteData) => {
+  try {
+    const response = await api.post('/cp/send-invite-email/', {
+      email: inviteData.email,
+      name: inviteData.name,
+      phone: inviteData.phone,
+      personal_message: inviteData.personal_message
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Failed to send invite' };
+  }
+},
+
+  // Copy invite link to clipboard - ADD THIS METHOD
+  copyInviteLink: async (link) => {
     try {
-      const response = await api.post('/cp/send-invite-email/', { email });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { error: 'Failed to send email' };
+      await navigator.clipboard.writeText(link);
+      return true;
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = link;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
     }
   },
 
@@ -50,6 +73,34 @@ const cpInviteService = {
       document.body.removeChild(textArea);
       return true;
     }
+  },
+
+    // Check if invite is still valid
+  isInviteValid: (invite) => {
+    if (invite.is_used) return false;
+    const expiryDate = new Date(invite.expires_at);
+    return expiryDate > new Date();
+  },
+
+  // Get days until expiry
+  getDaysUntilExpiry: (expiryDate) => {
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  },
+
+  // Get status badge
+  getStatusBadge: (invite) => {
+    if (invite.is_used) {
+      return { label: 'Used', className: 'success' };
+    }
+    const isValid = cpInviteService.isInviteValid(invite);
+    if (!isValid) {
+      return { label: 'Expired', className: 'expired' };
+    }
+    return { label: 'Active', className: 'active' };
   },
 
   // Share via WhatsApp

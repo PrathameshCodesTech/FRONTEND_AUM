@@ -22,6 +22,7 @@ const CPProfile = () => {
     business_address: '',
     bank_name: '',
     account_number: '',
+    pan_number: '', 
     ifsc_code: '',
     account_holder_name: ''
   });
@@ -42,6 +43,7 @@ const CPProfile = () => {
           business_address: result.data.business_address || '',
           bank_name: result.data.bank_name || '',
           account_number: result.data.account_number || '',
+          pan_number: result.data.pan_number || '',   // ✅ add this
           ifsc_code: result.data.ifsc_code || '',
           account_holder_name: result.data.account_holder_name || ''
         });
@@ -87,6 +89,7 @@ const CPProfile = () => {
       business_address: profile.business_address || '',
       bank_name: profile.bank_name || '',
       account_number: profile.account_number || '',
+       pan_number: profile.pan_number || '',   // ✅ add this
       ifsc_code: profile.ifsc_code || '',
       account_holder_name: profile.account_holder_name || ''
     });
@@ -200,11 +203,27 @@ const CPProfile = () => {
                 )}
               </div>
             )}
+               
 
             <div className="profile-field">
-              <label>PAN Number</label>
-              <div className="field-value readonly">{profile.pan_number}</div>
-            </div>
+  <label>PAN Number</label>
+  {editing ? (
+    <input
+      type="text"
+      className="field-input-profile"
+      value={formData.pan_number}
+      onChange={(e) =>
+        handleChange('pan_number', e.target.value.toUpperCase())
+      }
+      maxLength={10}
+    />
+  ) : (
+    <div className="field-value">
+      {profile.pan_number || '-'}
+    </div>
+  )}
+</div>
+
 
             {profile.gst_number && (
               <div className="profile-field">

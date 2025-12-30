@@ -45,7 +45,7 @@ const UserPortfolio = () => {
     fetchAnalytics();
   }, []);
 
-  const fetchInvestments = async () => {
+  const fetchInvestments = async () => {  
     setLoading(true);
     try {
       const response = await investmentService.getMyInvestments();
@@ -170,6 +170,26 @@ const UserPortfolio = () => {
 
   const filteredInvestments = getFilteredInvestments();
 
+
+      const portfolioGrowthData = Array.isArray(analyticsData?.portfolio_growth)
+  ? analyticsData.portfolio_growth
+  : [];
+
+// const payoutHistoryData = Array.isArray(analyticsData?.payout_history)
+//   ? analyticsData.payout_history
+//   : [];
+
+const payoutHistoryData = Array.isArray(analyticsData?.payout_history)
+  ? analyticsData.payout_history.map(item => ({
+      quarter: item.quarter,
+      paid_amount: item.paid_amount || 0,  // ✅ Use paid_amount directly
+      due_amount: item.due_amount || 0      // ✅ Use due_amount directly
+    }))
+  : [];
+
+
+  const fundingPercentage = Number(analyticsData?.funding_percentage ?? 0);
+
   return (
     <div className="portfolio-page">
       <Sidebar />
@@ -280,29 +300,39 @@ const UserPortfolio = () => {
                     <div className="metric-description">On ₹ {analyticsData.investment_amount || '25'} L investment over tenure</div>
                   </div>
                 </div>
-
+              
+              {analyticsData?.funding_percentage != null && (
                 <div className="funding-status-section">
                   <h4>Funding Status</h4>
                   <div className="progress-bar-container">
-                    <div 
+                    {/* <div 
                       className="progress-bar-fill" 
                       style={{width: `${analyticsData.funding_percentage || 72}%`}}
                     >
                       <span className="progress-text">{analyticsData.funding_percentage || 72}% Funded</span>
-                    </div>
+                    </div> */}
+                    <div 
+  className="progress-bar-fill"
+  style={{ width: `${Math.min(100, fundingPercentage)}%` }}
+>
+  <span className="progress-text">
+    {fundingPercentage}% Funded
+  </span>
+</div>
+
                   </div>
                   <div className="funding-details">
                     <span>₹ {analyticsData.funded_amount || '18'} L funded</span>
                     <span>₹ {analyticsData.available_amount || '7'} L available</span>
                   </div>
                 </div>
-
+                )}
                 
               </div>
             </div>
 
             {/* Portfolio Distribution, ROI Breakdown, Property Types - 3 in a row */}
-            <div className="analytics-row-3">
+            <div className="analytics-row-2">
               {/* Portfolio Distribution - Pie Chart */}
               <div className="chart-card">
                 <div className="chart-header">
@@ -332,7 +362,7 @@ const UserPortfolio = () => {
               </div>
 
               {/* ROI Breakdown - Donut Chart */}
-              <div className="chart-card">
+              {/* <div className="chart-card">
                 <div className="chart-header">
                   <h3>ROI Breakdown</h3>
                   <p className="chart-subtitle">Average Returns</p>
@@ -359,7 +389,7 @@ const UserPortfolio = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </div> */}
 
               {/* Property Types - Pie Chart */}
               <div className="chart-card">
@@ -376,7 +406,7 @@ const UserPortfolio = () => {
                         nameKey="type"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
+                        outerRadius={100} 
                         label
                       >
                         {(analyticsData.property_types || []).map((entry, index) => (
@@ -400,7 +430,7 @@ const UserPortfolio = () => {
                   <p className="chart-subtitle">Historical Performance</p>
                 </div>
                 <div className="chart-container">
-                  <ResponsiveContainer width="100%" height={300}>
+                  {/* <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={analyticsData.portfolio_growth || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
@@ -409,7 +439,25 @@ const UserPortfolio = () => {
                       <Legend />
                       <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} name="Portfolio Value" />
                     </LineChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
+                  <ResponsiveContainer width="100%" height={300}>
+  <LineChart data={portfolioGrowthData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="month" />
+    <YAxis tickFormatter={(v) => `₹${(v/100000).toFixed(0)}L`} />
+    <Tooltip formatter={(v) => formatCurrency(Number(v || 0))} />
+    <Legend />
+    <Line
+      type="monotone"
+      dataKey="value"
+      stroke="#3B82F6"
+      strokeWidth={3}
+      dot={{ r: 4 }}
+      name="Portfolio Value"
+    />
+  </LineChart>
+</ResponsiveContainer>
+
                 </div>
               </div>
 
@@ -420,7 +468,7 @@ const UserPortfolio = () => {
                   <p className="chart-subtitle">Quarterly Distributions</p>
                 </div>
                 <div className="chart-container">
-                  <ResponsiveContainer width="100%" height={300}>
+                  {/* <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={analyticsData.payout_history || []}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="quarter" />
@@ -433,7 +481,57 @@ const UserPortfolio = () => {
                         ))}
                       </Bar>
                     </BarChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
+                  {/* <ResponsiveContainer width="100%" height={300}>
+  <BarChart data={payoutHistoryData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="quarter" />
+    <YAxis tickFormatter={(v) => `₹${(v/1000).toFixed(0)}K`} />
+    <Tooltip formatter={(v) => formatCurrency(Number(v || 0))} />
+    <Legend />
+    <Bar dataKey="amount" name="Payout Amount">
+      {payoutHistoryData.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={entry.type === 'actual' ? '#10B981' : '#F59E0B'}
+        />
+      ))}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer> */}
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={payoutHistoryData}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="quarter" />
+    <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}K`} />
+    <Tooltip
+      formatter={(v, name) =>
+        [`${formatCurrency(Number(v || 0))}`, name === 'paid_amount' ? 'Paid' : 'Due']
+      }
+    />
+    <Legend />
+
+    {/* PAID AMOUNT */}
+    <Bar
+      dataKey="paid_amount"
+      stackId="payout"
+      name="Paid Amount"
+      fill="#10B981"
+      radius={[6, 6, 0, 0]}
+    />
+
+    {/* DUE AMOUNT */}
+    <Bar
+      dataKey="due_amount"
+      stackId="payout"
+      name="Due Amount"
+      fill="#F59E0B"
+      radius={[6, 6, 0, 0]}
+    />
+  </BarChart>
+</ResponsiveContainer>
+
+
                 </div>
               </div>
             </div>

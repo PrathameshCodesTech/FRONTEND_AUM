@@ -14,6 +14,8 @@ import AdminInvestments from '../pages/admin/AdminInvestments';
 import AdminInvestmentDetail from '../pages/admin/AdminInvestmentDetail';
 import AdminCommissions from '../pages/admin/AdminCommissions';
 import AdminCPRoutes from './AdminCPRoutes'; // Add this import
+import AdminUserCreation from '../pages/admin/AdminUserCreation';
+import AdminUserInvestment from "../pages/admin/AdminUserInvestment";
 // Protected Route Component
 const ProtectedAdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -55,6 +57,11 @@ const AdminRoutes = () => {
         {/* User Management */}
         <Route path="users" element={<AdminUsers />} />
         <Route path="users/:userId" element={<AdminUserDetail />} />
+        <Route path="users/create" element={<AdminUserCreation />} />
+        <Route
+          path="users/:userId/investment"
+          element={<AdminUserInvestment />}
+        />
 
         {/* KYC Management */}
         <Route path="kyc" element={<AdminKYC />} />
@@ -63,12 +70,21 @@ const AdminRoutes = () => {
         {/* Property Management */}
         <Route path="properties" element={<AdminProperties />} />
         <Route path="properties/create" element={<AdminPropertyForm />} />
-        <Route path="properties/:propertyId" element={<AdminPropertyDetail />} />
-        <Route path="properties/:propertyId/edit" element={<AdminPropertyForm />} />
+        <Route
+          path="properties/:propertyId"
+          element={<AdminPropertyDetail />}
+        />
+        <Route
+          path="properties/:propertyId/edit"
+          element={<AdminPropertyForm />}
+        />
 
         {/* Investment Management */}
         <Route path="investments" element={<AdminInvestments />} />
-        <Route path="investments/:investmentId" element={<AdminInvestmentDetail />} />
+        <Route
+          path="investments/:investmentId"
+          element={<AdminInvestmentDetail />}
+        />
         <Route path="/admin/commissions" element={<AdminCommissions />} />
 
         {/* CP Routes */}

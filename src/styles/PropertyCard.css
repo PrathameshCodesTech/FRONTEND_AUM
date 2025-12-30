@@ -387,3 +387,33 @@
   background: #333;
   transform: translateY(-2px);
 }
+
+.property-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.metric {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb; /* optional */
+  text-align: center;
+}
+
+.metric-label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metric-value.highlight {
+  color: #16a34a;
+}

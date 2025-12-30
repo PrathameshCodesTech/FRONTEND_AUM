@@ -1,0 +1,245 @@
+/* styles/rm/RMHeader.css */
+
+.rm-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.rm-header-container {
+  max-width: 1400px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6rem;
+}
+
+/* LEFT - LOGO */
+.rm-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.rm-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.rm-logo-image {
+  height: 40px;
+  width: auto;
+}
+
+.rm-badge {
+  padding: 0.25rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* CENTER - NAVIGATION */
+.rm-nav-menu {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.rm-nav-link {
+  padding: 0.5rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.rm-nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.rm-nav-link.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* RIGHT - USER MENU */
+.rm-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.rm-user-menu-wrapper {
+  position: relative;
+}
+
+.rm-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rm-user-menu:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.rm-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rm-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.rm-user-name {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.rm-user-role {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+}
+
+.rm-user-arrow {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+}
+
+.rm-user-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* USER DROPDOWN */
+.rm-user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 200px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.rm-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rm-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.rm-dropdown-item svg {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rm-dropdown-item:hover svg {
+  color: #ffffff;
+}
+
+.rm-dropdown-item.logout {
+  color: #ff4757;
+}
+
+.rm-dropdown-item.logout:hover {
+  background: rgba(255, 71, 87, 0.1);
+}
+
+.rm-dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .rm-nav-menu {
+    gap: 0.25rem;
+  }
+
+  .rm-nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .rm-header {
+    height: 60px;
+  }
+
+  .rm-header-container {
+    padding: 0 1rem;
+  }
+
+  .rm-nav-menu {
+    display: none;
+  }
+
+  .rm-badge {
+    display: none;
+  }
+
+  .rm-user-info {
+    display: none;
+  }
+
+  .rm-user-menu {
+    padding: 0.5rem;
+  }
+}

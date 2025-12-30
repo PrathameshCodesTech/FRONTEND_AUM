@@ -57,9 +57,9 @@ const AdminPropertyDetail = () => {
         setStatusForm({
           status: response.data.status || 'draft',
          is_featured: response.data.is_featured ?? false,
-is_published: response.data.is_published ?? false,
-is_public_sale: response.data.is_public_sale ?? false,
-is_presale: response.data.is_presale ?? false,
+          is_published: response.data.is_published ?? false,
+          is_public_sale: response.data.is_public_sale ?? false,
+          is_presale: response.data.is_presale ?? false,
 
         });
         

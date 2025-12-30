@@ -23,37 +23,81 @@ const CPInvites = () => {
     fetchInvites();
   }, []);
 
-  const fetchInvites = async () => {
-    try {
-      setLoading(true);
-      const result = await cpInviteService.getInvites();
+  // const fetchInvites = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const result = await cpInviteService.getInviteSignups();
       
-      if (result.success) {
-        setInvites(result.data);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError('Failed to load invites');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (result.success) {
+  //       setInvites(result.data);
+  //     } else {
+  //       setError(result.error);
+  //     }
+  //   } catch (err) {
+  //     setError('Failed to load invites');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleSendInvite = async (inviteData) => {
-    try {
-      const result = await cpInviteService.sendInvite(inviteData);
-      
-      if (result.success) {
-        fetchInvites(); // Refresh list
-        setShowForm(false);
-      } else {
-        alert(result.error || 'Failed to send invite');
-      }
-    } catch (err) {
-      alert('Failed to send invite');
+  const fetchInvites = async () => {
+  try {
+    setLoading(true);
+    setError(null); // Clear previous errors
+    
+    const result = await cpInviteService.getInviteSignups();
+    
+    console.log('API Response:', result); // Debug log
+    
+    if (result.success) {
+      console.log('Invites data:', result.data); // Debug log
+      setInvites(result.data || []); // Ensure it's an array
+    } else {
+      setError(result.error || 'Failed to load invites');
     }
-  };
+  } catch (err) {
+    console.error('Fetch invites error:', err); // Debug log
+    setError(err.message || 'Failed to load invites');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const handleSendInvite = async (inviteData) => {
+  //   try {
+  //     const result = await cpInviteService.sendInvite(inviteData);
+      
+  //     if (result.success) {
+  //       fetchInvites(); // Refresh list
+  //       setShowForm(false);
+  //     } else {
+  //       alert(result.error || 'Failed to send invite');
+  //     }
+  //   } catch (err) {
+  //     alert('Failed to send invite');
+  //   }
+  // };
+  const handleSendInvite = async (inviteData) => {
+  try {
+    const result = await cpInviteService.sendInviteEmail(inviteData);
+    
+    if (result.success) {
+      // Close form first
+      setShowForm(false);
+      
+      // Refresh the invites list to update counts
+      await fetchInvites();
+      
+      // Optional: Show success message
+      alert('Invite sent successfully!');
+    } else {
+      alert(result.error || 'Failed to send invite');
+    }
+  } catch (err) {
+    console.error('Error sending invite:', err);
+    alert(err.error || 'Failed to send invite');
+  }
+};
 
   const handleCopyLink = async (inviteLink, inviteCode) => {
     try {
@@ -91,7 +135,7 @@ const CPInvites = () => {
   }
 
   return (
-    <div className="cp-invites-page">
+    <div className="cp-invites-page"> 
       <CPHeader />
 
       <div className="cp-invites-container">
@@ -172,34 +216,48 @@ const CPInvites = () => {
                   </div>
 
                   {/* Invite Details */}
-                  <div className="invite-details">
-                    <div className="detail-item-invite">
-                      <span className="detail-label-invite">Invite Code:</span>
-                      <span className="detail-value-invite code">{invite.invite_code}</span>
-                    </div>
-                    <div className="detail-item-invite">
-                      <span className="detail-label-invite">Sent:</span>
-                      <span className="detail-value-invite">
-                        {new Date(invite.created_at).toLocaleDateString('en-IN')}
-                      </span>
-                    </div>
-                    {!invite.is_used && isValid && (
-                      <div className="detail-item-invite">
-                        <span className="detail-label-invite">Expires in:</span>
-                        <span className="detail-value-invite expiry">
-                          {daysRemaining} days
-                        </span>
-                      </div>
-                    )}
-                    {invite.is_used && invite.used_at && (
-                      <div className="detail-item-invite">
-                        <span className="detail-label-invite">Used on:</span>
-                        <span className="detail-value-invite success">
-                          {new Date(invite.used_at).toLocaleDateString('en-IN')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Invite Details */}
+<div className="invite-details">
+  <div className="detail-item-invite">
+    <span className="detail-label-invite">Invite Code:</span>
+    <span className="detail-value-invite code">
+      {invite.invite_code ||invite.code || 'N/A'}
+    </span>
+  </div>
+  <div className="detail-item-invite">
+    <span className="detail-label-invite">Sent:</span>
+    <span className="detail-value-invite">
+      {invite.created_at 
+        ? new Date(invite.created_at).toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
+        : '-' 
+      }
+    </span>
+  </div>
+  {!invite.is_used && isValid && invite.expires_at && (
+    <div className="detail-item-invite">
+      <span className="detail-label-invite">Expires in:</span>
+      <span className="detail-value-invite expiry">
+        {daysRemaining} days
+      </span>
+    </div>
+  )}
+  {invite.is_used && invite.used_at && (
+    <div className="detail-item-invite">
+      <span className="detail-label-invite">Used on:</span>
+      <span className="detail-value-invite success">
+        {new Date(invite.used_at).toLocaleDateString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })}
+      </span>
+    </div>
+  )}
+</div>
 
                   {/* Invite Link */}
                   {!invite.is_used && isValid && (

@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoutes from './routes/AdminRoutes';
 import CPRoutes from './routes/CPRoutes'; // Add this import
+import RMRoutes from './routes/RMRoutes';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoginSignup from './components/LoginSignup';
@@ -60,6 +61,9 @@ function App() {
                 CP ROUTES - No Header/Footer (they have their own)
                 ======================================== */}
             <Route path="/cp/*" element={<CPRoutes />} />
+
+
+             <Route path="/rm/*" element={<RMRoutes />} />
 
             {/* ========================================
                 LOGIN ROUTE - No Header/Footer

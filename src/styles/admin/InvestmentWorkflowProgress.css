@@ -5,6 +5,10 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 32px;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: 200px;   /* adjust this value to taste */
+  overflow: hidden;
   margin-bottom: 32px;
 }
 

@@ -1,0 +1,33 @@
+/* layouts/RMLayout.css */
+
+.rm-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.rm-main-content {
+  flex: 1;
+  margin-top: 70px; /* Height of header */
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Ensure consistent spacing for all pages */
+.rm-main-content > * {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .rm-main-content {
+    margin-top: 60px;
+  }
+  
+  .rm-main-content > * {
+    padding: 1rem;
+  }
+}

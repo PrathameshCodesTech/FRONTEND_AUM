@@ -181,12 +181,13 @@ const AdminDashboard = () => {
           </button>
           <button className="action-card" onClick={() => navigate('/admin/properties')}>
             <span className="action-icon">{renderIcon('properties')}</span>
-            <span className="action-label">Manage Properties</span>
+            <span className="action-label">Manage Investments</span>
           </button>
           <button className="action-card" onClick={() => navigate('/admin/investments')}>
             <span className="action-icon">{renderIcon('investments')}</span>
             <span className="action-label">View Investments</span>
           </button>
+          
         </div>
       </div>
     </div>

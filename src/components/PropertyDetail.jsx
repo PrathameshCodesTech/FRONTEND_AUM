@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import propertyService from '../services/propertyService';
 import investmentService from '../services/investmentService';
+import PropertyMap from '../components/PropertyMap'
+
 import '../styles/PropertyDetail.css';
 
 const PropertyDetail = () => {
@@ -48,6 +50,11 @@ const PropertyDetail = () => {
   const [neftRtgsRefNo, setNeftRtgsRefNo] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
 
+  const [paidAmount, setPaidAmount] = useState('');
+  const [paymentDueDate, setPaymentDueDate] = useState(''); // 🆕 ADD THIS
+  const [isPartialPayment, setIsPartialPayment] = useState(false); // 🆕 ADD THIS
+
+
   // Check if user has CP relation
   useEffect(() => {
     if (isAuthenticated) {
@@ -78,6 +85,37 @@ const PropertyDetail = () => {
       fetchExpectedEarnings(earningsAmount);
     }
   }, [activeTab]);
+
+  // ============================================
+// 🆕 ADD THIS useEffect TO AUTO-SYNC PAID AMOUNT
+// ============================================
+
+useEffect(() => {
+  // Auto-set paid amount to match investment amount (full payment by default)
+  if (investmentAmount && !paidAmount) {
+    setPaidAmount(investmentAmount);
+  }
+}, [investmentAmount]);
+
+// ============================================
+// 🆕 ADD THIS useEffect TO DETECT PARTIAL PAYMENT
+// ============================================
+
+useEffect(() => {
+  if (investmentAmount && paidAmount) {
+    const investment = parseFloat(investmentAmount);
+    const paid = parseFloat(paidAmount);
+    const isPartial = paid < investment && paid > 0;
+    setIsPartialPayment(isPartial);
+    
+    // Auto-set due date to 30 days from now if partial
+    if (isPartial && !paymentDueDate) {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      setPaymentDueDate(dueDate.toISOString().split('T')[0]);
+    }
+  }
+}, [investmentAmount, paidAmount]);
 
   const fetchPropertyDetail = async () => {
     setLoading(true);
@@ -142,119 +180,433 @@ const PropertyDetail = () => {
   };
 
   // 🆕 UPDATED INVESTMENT SUBMIT WITH PAYMENT
+  // const handleInvestmentSubmit = async () => {
+
+  //    // ✅ FIX: Parse and validate amount properly
+  //  const currentAmount = parseFloat(investmentAmount);
+  //    // 🆕 UPDATED: Only validate positive amount (no minimum check)
+  // // if (!investmentAmount || parseFloat(investmentAmount) <= 0) {
+  // //   toast.error('Please enter a valid investment amount');
+  // //   return;
+  // // }
+  //   if (!investmentAmount || isNaN(currentAmount) || currentAmount <= 0) {
+  //   toast.error('Please enter a valid investment amount');
+  //   return;
+  // }
+
+  //   // ✅ FIX: Parse property limits
+  // const minInvestment = parseFloat(property.minimum_investment);
+  // const maxInvestment = property.maximum_investment ? parseFloat(property.maximum_investment) : null;
+  
+  // // Check maximum limit first
+  // if (maxInvestment && currentAmount > maxInvestment) {
+  //   toast.error(`Maximum investment is ₹${maxInvestment.toLocaleString('en-IN')}`);
+  //   return;
+  // }
+
+  //   // 🆕 SHOW WARNING if below minimum (but still allow)
+  // // const minInvestment = parseFloat(property.minimum_investment);
+  // // const currentAmount = parseFloat(investmentAmount);
+  // const isPartialPayment = currentAmount < minInvestment;
+  
+  // if (isPartialPayment) {
+  //   const dueAmount = minInvestment - currentAmount;
+  //   const confirmPartial = window.confirm(
+  //     `⚠️ Partial Payment Notice\n\n` +
+  //     `Minimum investment: ₹${minInvestment.toLocaleString('en-IN')}\n` +
+  //     `Your amount: ₹${currentAmount.toLocaleString('en-IN')}\n` +
+  //     `Due amount: ₹${dueAmount.toLocaleString('en-IN')}\n\n` +
+  //     `You'll need to pay the remaining amount within 30 days.\n\n` +
+  //     `Do you want to continue?`
+  //   );
+    
+  //   if (!confirmPartial) {
+  //     return;
+  //   }
+  // }
+
+  //   // 🆕 VALIDATE PAYMENT METHOD FIELDS
+  //   if (paymentMethod === 'ONLINE' || paymentMethod === 'POS') {
+  //     if (!transactionNo.trim()) {
+  //       toast.error('Transaction number is required');
+  //       return;
+  //     }
+  //   }
+
+  //   if (paymentMethod === 'DRAFT_CHEQUE') {
+  //     if (!chequeNumber.trim() || !chequeDate || !bankName.trim() || !ifscCode.trim() || !branchName.trim()) {
+  //       toast.error('Please fill all cheque details');
+  //       return;
+  //     }
+  //   }
+
+  //   if (paymentMethod === 'NEFT_RTGS') {
+  //     if (!neftRtgsRefNo.trim()) {
+  //       toast.error('NEFT/RTGS reference number is required');
+  //       return;
+  //     }
+  //   }
+
+  //   setInvesting(true);
+  //   try {
+  //     // 🆕 CREATE FORMDATA FOR FILE UPLOADS
+  //     const formData = new FormData();
+  //     formData.append('property_id', property.id);
+  //     // formData.append('amount', investmentAmount);
+  //     formData.append('amount', currentAmount.toFixed(2)); // ✅ Format to 2 decimals
+  //     formData.append('units_count', unitsCount);
+      
+  //     // Payment details
+  //     formData.append('payment_method', paymentMethod);
+  //     formData.append('payment_date', new Date().toISOString());
+  //     formData.append('payment_notes', paymentNotes);
+
+  //     // Add method-specific fields
+  //     if (paymentMethod === 'ONLINE' || paymentMethod === 'POS') {
+  //       formData.append('payment_mode', paymentMode);
+  //       formData.append('transaction_no', transactionNo);
+  //       if (posSlipImage) {
+  //         formData.append('pos_slip_image', posSlipImage);
+  //       }
+  //     }
+
+  //     if (paymentMethod === 'DRAFT_CHEQUE') {
+  //       formData.append('cheque_number', chequeNumber);
+  //       formData.append('cheque_date', chequeDate);
+  //       formData.append('bank_name', bankName);
+  //       formData.append('ifsc_code', ifscCode);
+  //       formData.append('branch_name', branchName);
+  //       if (chequeImage) {
+  //         formData.append('cheque_image', chequeImage);
+  //       }
+  //     }
+
+  //     if (paymentMethod === 'NEFT_RTGS') {
+  //       formData.append('neft_rtgs_ref_no', neftRtgsRefNo);
+  //     }
+
+  //     // ✅ KEEP: Referral code logic (unchanged)
+  //     const referralCodeToSend = referralCode.trim() || undefined;
+  //     if (referralCodeToSend) {
+  //       formData.append('referral_code', referralCodeToSend);
+  //     }
+
+  //     console.log('🔍 Submitting investment with payment...');
+
+  //         const response = await investmentService.createInvestmentWithPayment(formData);
+    
+  //   if (response.success) {
+  //     // 🆕 SHOW DIFFERENT MESSAGE for partial payment
+  //     if (isPartialPayment) {
+  //       toast.success('Partial payment submitted! Complete remaining payment within 30 days.', {
+  //         duration: 5000
+  //       });
+  //     } else {
+  //       toast.success(response.message || 'Investment submitted successfully!');
+  //     }
+      
+  //     setShowInvestModal(false);
+      
+  //     setTimeout(() => {
+  //       navigate('/dashboard');
+  //     }, 1500);
+  //   }
+  // } catch (error) {
+  //   console.error('Investment error:', error);
+  //   toast.error(error.message || 'Failed to create investment');
+  // } finally {
+  //   setInvesting(false);
+  //   }
+  // };
+
   const handleInvestmentSubmit = async () => {
-    // Validate minimum investment
-    if (!investmentAmount || parseFloat(investmentAmount) < parseFloat(property.minimum_investment)) {
-      toast.error(`Minimum investment is ${formatCurrency(property.minimum_investment)}`);
+
+  // ================================
+  // 1️⃣ PARSE & BASIC VALIDATIONS
+  // ================================
+  const currentAmount = parseFloat(investmentAmount);
+  const paid = parseFloat(paidAmount);
+
+  if (!investmentAmount || isNaN(currentAmount) || currentAmount <= 0) {
+    toast.error('Please enter a valid investment amount');
+    return;
+  }
+
+  if (!paidAmount || isNaN(paid) || paid <= 0) {
+    toast.error('Please enter a valid paid amount');
+    return;
+  }
+
+  if (paid > currentAmount) {
+    toast.error('Paid amount cannot be greater than investment amount');
+    return;
+  }
+
+  // ================================
+  // 2️⃣ PROPERTY LIMIT VALIDATIONS
+  // ================================
+  const minInvestment = parseFloat(property.minimum_investment);
+  const maxInvestment = property.maximum_investment
+    ? parseFloat(property.maximum_investment)
+    : null;
+
+  if (maxInvestment && currentAmount > maxInvestment) {
+    toast.error(`Maximum investment is ₹${maxInvestment.toLocaleString('en-IN')}`);
+    return;
+  }
+
+  // ================================
+  // 3️⃣ PARTIAL PAYMENT CHECK
+  // ================================
+   const isPartial = paid < currentAmount;
+  const dueAmount = currentAmount - paid;
+
+    // 🆕 VALIDATE DUE DATE FOR PARTIAL PAYMENTS
+  if (isPartial && !paymentDueDate) {
+    toast.error('Payment due date is required for partial payments');
+    return;
+  }
+
+  // 🆕 VALIDATE DUE DATE IS IN THE FUTURE
+  if (isPartial && paymentDueDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(paymentDueDate);
+    
+    if (dueDate <= today) {
+      toast.error('Payment due date must be in the future');
       return;
     }
+  }
 
-    // 🆕 VALIDATE PAYMENT METHOD FIELDS
+
+  if (isPartial) {
+    const confirmPartial = window.confirm(
+        `⚠️ Partial Payment Notice\n\n` +
+      `Investment amount: ₹${currentAmount.toLocaleString('en-IN')}\n` +
+      `Paid amount: ₹${paid.toLocaleString('en-IN')}\n` +
+      `Due amount: ₹${dueAmount.toLocaleString('en-IN')}\n` +
+      `Due date: ${new Date(paymentDueDate).toLocaleDateString('en-IN')}\n\n` +
+      `You'll need to pay the remaining amount by the due date.\n\n` +
+      `Do you want to continue?`
+    );
+
+    if (!confirmPartial) {
+      return;
+    }
+  }
+
+  // ================================
+  // 4️⃣ PAYMENT METHOD VALIDATION
+  // ================================
+  if (paymentMethod === 'ONLINE' || paymentMethod === 'POS') {
+    if (!transactionNo.trim()) {
+      toast.error('Transaction number is required');
+      return;
+    }
+  }
+
+  if (paymentMethod === 'DRAFT_CHEQUE') {
+    if (
+      !chequeNumber.trim() ||
+      !chequeDate ||
+      !bankName.trim() ||
+      !ifscCode.trim() ||
+      !branchName.trim()
+    ) {
+      toast.error('Please fill all cheque details');
+      return;
+    }
+  }
+
+  if (paymentMethod === 'NEFT_RTGS') {
+    if (!neftRtgsRefNo.trim()) {
+      toast.error('NEFT/RTGS reference number is required');
+      return;
+    }
+  }
+
+  // ================================
+  // 5️⃣ SUBMIT INVESTMENT
+  // ================================
+  setInvesting(true);
+
+  try {
+    const formData = new FormData();
+
+    // Core investment data
+    formData.append('property_id', property.id);
+    formData.append('amount', currentAmount.toFixed(2));
+    formData.append('paid_amount', paid.toFixed(2)); // 🆕 PAID AMOUNT
+    formData.append('units_count', unitsCount);
+
+      // 🆕 PARTIAL PAYMENT FIELDS
+    if (isPartial) {
+      formData.append('commitment_amount', currentAmount.toFixed(2)); // ✅ Total commitment
+      formData.append('payment_due_date', paymentDueDate); // ✅ Due date
+    }
+
+    // Payment common fields
+    formData.append('payment_method', paymentMethod);
+    formData.append('payment_date', new Date().toISOString());
+    formData.append('payment_notes', paymentNotes);
+
+    // ONLINE / POS
     if (paymentMethod === 'ONLINE' || paymentMethod === 'POS') {
-      if (!transactionNo.trim()) {
-        toast.error('Transaction number is required');
-        return;
+      formData.append('payment_mode', paymentMode);
+      formData.append('transaction_no', transactionNo);
+      if (posSlipImage) {
+        formData.append('pos_slip_image', posSlipImage);
       }
     }
 
+    // CHEQUE
     if (paymentMethod === 'DRAFT_CHEQUE') {
-      if (!chequeNumber.trim() || !chequeDate || !bankName.trim() || !ifscCode.trim() || !branchName.trim()) {
-        toast.error('Please fill all cheque details');
-        return;
+      formData.append('cheque_number', chequeNumber);
+      formData.append('cheque_date', chequeDate);
+      formData.append('bank_name', bankName);
+      formData.append('ifsc_code', ifscCode);
+      formData.append('branch_name', branchName);
+      if (chequeImage) {
+        formData.append('cheque_image', chequeImage);
       }
     }
 
+    // NEFT / RTGS
     if (paymentMethod === 'NEFT_RTGS') {
-      if (!neftRtgsRefNo.trim()) {
-        toast.error('NEFT/RTGS reference number is required');
-        return;
-      }
+      formData.append('neft_rtgs_ref_no', neftRtgsRefNo);
     }
 
-    setInvesting(true);
-    try {
-      // 🆕 CREATE FORMDATA FOR FILE UPLOADS
-      const formData = new FormData();
-      formData.append('property_id', property.id);
-      formData.append('amount', investmentAmount);
-      formData.append('units_count', unitsCount);
-      
-      // Payment details
-      formData.append('payment_method', paymentMethod);
-      formData.append('payment_date', new Date().toISOString());
-      formData.append('payment_notes', paymentNotes);
-
-      // Add method-specific fields
-      if (paymentMethod === 'ONLINE' || paymentMethod === 'POS') {
-        formData.append('payment_mode', paymentMode);
-        formData.append('transaction_no', transactionNo);
-        if (posSlipImage) {
-          formData.append('pos_slip_image', posSlipImage);
-        }
-      }
-
-      if (paymentMethod === 'DRAFT_CHEQUE') {
-        formData.append('cheque_number', chequeNumber);
-        formData.append('cheque_date', chequeDate);
-        formData.append('bank_name', bankName);
-        formData.append('ifsc_code', ifscCode);
-        formData.append('branch_name', branchName);
-        if (chequeImage) {
-          formData.append('cheque_image', chequeImage);
-        }
-      }
-
-      if (paymentMethod === 'NEFT_RTGS') {
-        formData.append('neft_rtgs_ref_no', neftRtgsRefNo);
-      }
-
-      // ✅ KEEP: Referral code logic (unchanged)
-      const referralCodeToSend = referralCode.trim() || undefined;
-      if (referralCodeToSend) {
-        formData.append('referral_code', referralCodeToSend);
-      }
-
-      console.log('🔍 Submitting investment with payment...');
-
-      const response = await investmentService.createInvestmentWithPayment(formData);
-      
-      if (response.success) {
-        toast.success(response.message || 'Investment submitted successfully! Waiting for payment approval.');
-        setShowInvestModal(false);
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1500);
-      }
-    } catch (error) {
-      console.error('Investment error:', error);
-      toast.error(error.message || 'Failed to create investment');
-    } finally {
-      setInvesting(false);
+    // Referral code (unchanged)
+    const referralCodeToSend = referralCode.trim() || undefined;
+    if (referralCodeToSend) {
+      formData.append('referral_code', referralCodeToSend);
     }
-  };
+
+    console.log('🔍 Submitting investment with payment...');
+
+    const response = await investmentService.createInvestmentWithPayment(formData);
+
+//     if (response.success) {
+//       if (isPartialPayment) {
+//         toast.success(
+//           'Partial payment submitted! Complete remaining payment within 30 days.',
+//           { duration: 5000 }
+//         );
+//       } else {
+//         toast.success(response.message || 'Investment submitted successfully!');
+//       }
+
+//       setShowInvestModal(false);
+
+//       setTimeout(() => {
+//         navigate('/dashboard');
+//       }, 1500);
+//     }
+//   } catch (error) {
+//     console.error('Investment error:', error);
+//     toast.error(error.message || 'Failed to create investment');
+//   } finally {
+//     setInvesting(false);
+//   }
+// };
+    if (response.success) {
+      if (isPartialPayment) {
+        toast.success(
+          `Partial payment submitted! ₹${dueAmount.toLocaleString('en-IN')} due by ${new Date(paymentDueDate).toLocaleDateString('en-IN')}`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(response.message || 'Investment submitted successfully!');
+      }
+
+      setShowInvestModal(false);
+
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    }
+  } catch (error) {
+    console.error('Investment error:', error);
+    toast.error(error.message || 'Failed to create investment');
+  } finally {
+    setInvesting(false);
+  }
+};
+
+
+  // const handleUnitsChange = (newUnits) => {
+  //   if (newUnits < 1) return;
+  //   if (newUnits > property.available_units) {
+  //     toast.error(`Only ${property.available_units} units available`);
+  //     return;
+  //   }
+  //   setUnitsCount(newUnits);
+  //   setInvestmentAmount(newUnits * parseFloat(property.price_per_unit));
+  // };
 
   const handleUnitsChange = (newUnits) => {
-    if (newUnits < 1) return;
-    if (newUnits > property.available_units) {
-      toast.error(`Only ${property.available_units} units available`);
-      return;
-    }
-    setUnitsCount(newUnits);
-    setInvestmentAmount(newUnits * parseFloat(property.price_per_unit));
-  };
+  if (newUnits < 1) return;
+  if (newUnits > property.available_units) {
+    toast.error(`Only ${property.available_units} units available`);
+    return;
+  }
+  setUnitsCount(newUnits);
+  // ✅ FIX: Calculate exact amount with proper decimal formatting
+  const pricePerUnit = parseFloat(property.price_per_unit);
+  setInvestmentAmount((newUnits * pricePerUnit).toFixed(2));
+};
+
+  // const handleAmountChange = (newAmount) => {
+  //   const amount = parseFloat(newAmount);
+  //   if (isNaN(amount) || amount < parseFloat(property.minimum_investment)) return;
+
+  //   const calculatedUnits = Math.floor(amount / parseFloat(property.price_per_unit));
+  //   if (calculatedUnits < 1) return;
+
+  //   setUnitsCount(calculatedUnits);
+  //   setInvestmentAmount(calculatedUnits * parseFloat(property.price_per_unit));
+  // };
 
   const handleAmountChange = (newAmount) => {
-    const amount = parseFloat(newAmount);
-    if (isNaN(amount) || amount < parseFloat(property.minimum_investment)) return;
+  // ✅ FIX: Better amount parsing and validation
+  const amount = parseFloat(newAmount);
+  
+  // Invalid amount
+  if (isNaN(amount) || amount <= 0) {
+    setInvestmentAmount('');
+    setUnitsCount(1);
+    return;
+  }
+  
+  const pricePerUnit = parseFloat(property.price_per_unit);
+  const minInvestment = parseFloat(property.minimum_investment);
+  
+    // ✅ WARN if below minimum
+  if (amount < minInvestment) {
+    toast.warn(`Minimum investment is ₹${minInvestment.toLocaleString('en-IN')}`);
+  }
+  
+  const calculatedUnits = Math.floor(amount / pricePerUnit);
+  
 
-    const calculatedUnits = Math.floor(amount / parseFloat(property.price_per_unit));
-    if (calculatedUnits < 1) return;
+  
+  // At least 1 unit required
+  if (calculatedUnits < 1) {
+    toast.error(`Minimum amount is ₹${pricePerUnit.toLocaleString('en-IN')} (1 unit)`);
+    return;
+  }
+  
+  // Check available units
+  if (calculatedUnits > property.available_units) {
+    toast.error(`Only ${property.available_units} units available`);
+    return;
+  }
 
-    setUnitsCount(calculatedUnits);
-    setInvestmentAmount(calculatedUnits * parseFloat(property.price_per_unit));
-  };
+  setUnitsCount(calculatedUnits);
+  // ✅ FIX: Set exact amount based on units (no rounding errors)
+  setInvestmentAmount((calculatedUnits * pricePerUnit).toFixed(2));
+};
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -447,12 +799,12 @@ const PropertyDetail = () => {
               >
                 Location
               </button>
-              <button
+              {/* <button
                 className={`tab ${activeTab === 'earnings' ? 'active' : ''}`}
                 onClick={() => setActiveTab('earnings')}
               >
                 Expected Earnings
-              </button>
+              </button> */}
             </div>
 
             {/* Tab Content - KEEPING EXISTING TABS */}
@@ -505,7 +857,7 @@ const PropertyDetail = () => {
                         <span className="spec-value">{property.available_units}</span>
                       </div>
                       <div className="spec-item">
-                        <span className="spec-label">Project Duration</span>
+                        <span className="spec-label">Tenure</span>
                         <span className="spec-value">{property.project_duration} months</span>
                       </div>
                     </div>
@@ -765,9 +1117,9 @@ const PropertyDetail = () => {
           <div className="property-right">
             <div className="investment-card">
               <div className="investment-header">
-                <h3>Investment Details</h3>
+                <h3>Investment Type</h3>
                 <span className="investor-count">
-                  {property.investor_count || 0} Investors
+                  Fractional
                 </span>
               </div>
 
@@ -777,7 +1129,7 @@ const PropertyDetail = () => {
                   <span className="price-value">{formatCurrency(property.minimum_investment)}</span>
                 </div>
                 <div className="price-item">
-                  <span className="price-label">Property Value</span>
+                  <span className="price-label">Assest Value</span>
                   <span className="price-value">{formatCurrency(property.target_amount)}</span>
                 </div>
               </div>
@@ -792,16 +1144,18 @@ const PropertyDetail = () => {
                   <span className="metric-value">{property.available_units}</span>
                 </div>
                 <div className="metric-row">
-                  <span className="metric-label">Target IRR</span>
-                  <span className="metric-value highlight">{property.expected_return_percentage}%</span>
+                     <span className="metric-label">Potential Growth</span>
+    <span className="metric-value highlight">
+      {property.potential_gain ? `${property.potential_gain}` : '2x'}
+    </span>
                 </div>
                 <div className="metric-row">
-                  <span className="metric-label">Gross Yield</span>
-                  <span className="metric-value highlight">{property.gross_yield}%</span>
+                  <span className="metric-label">Tenure</span>
+                  <span className="metric-value highlight">{property.project_duration} months</span>
                 </div>
                 <div className="metric-row">
-                  <span className="metric-label">Lock-in Period</span>
-                  <span className="metric-value">{property.lock_in_period} months</span>
+                  <span className="metric-label">Subscriptions</span>
+                  <span className="metric-value">{property.expected_return_percentage}</span>
                 </div>
               </div>
 
@@ -900,17 +1254,89 @@ const PropertyDetail = () => {
               </div>
 
               {/* AMOUNT INPUT */}
-              <div className="input-group">
-                <label>Investment Amount (₹)</label>
-                <input
-                  type="number"
-                  value={investmentAmount}
-                  onChange={(e) => handleAmountChange(e.target.value)}
-                  min={property.minimum_investment}
-                  step="1000"
-                />
-                <span className="input-hint">Min: {formatCurrency(property.minimum_investment)}</span>
-              </div>
+             <div className="input-group">
+  <label>Investment Amount (₹)</label>
+  <input
+    type="number"
+    value={investmentAmount}
+    onChange={(e) => handleAmountChange(e.target.value)}
+    min={property.minimum_investment}
+    max={property.maximum_investment || undefined}
+    step="1000"
+    className={parseFloat(investmentAmount) < parseFloat(property.minimum_investment) ? 'input-error' : ''}
+  />
+  <span className="input-hint">
+    Min: {formatCurrency(property.minimum_investment)}
+    {property.maximum_investment && ` | Max: ${formatCurrency(property.maximum_investment)}`}
+  </span>
+  {parseFloat(investmentAmount) < parseFloat(property.minimum_investment) && (
+    <span className="input-error-message">
+      ⚠️ Amount is below minimum investment
+    </span>
+  )}
+</div>
+
+{/* 🆕 PAID AMOUNT INPUT */}
+<div className="input-group">
+  <label>
+    Paid Amount (₹) <span className="required">*</span>
+    {isPartialPayment && (
+      <span style={{ color: "#f59e0b", fontSize: "0.9em", marginLeft: "8px" }}>
+        (Partial Payment)
+      </span>
+    )}
+  </label>
+  <input
+    type="number"
+    value={paidAmount}
+    onChange={(e) => setPaidAmount(e.target.value)}
+    min="0"
+    max={investmentAmount || undefined}
+    step="1000"
+    placeholder="Enter amount you're paying now"
+  />
+  <span className="input-hint">
+    You can pay less than the total investment amount
+  </span>
+  {paidAmount && Number(paidAmount) > Number(investmentAmount) && (
+    <span className="input-error-message">
+      ❌ Paid amount cannot exceed investment amount
+    </span>
+  )}
+</div>
+{/* 🆕 DUE AMOUNT DISPLAY (only show if partial) */}
+{isPartialPayment && investmentAmount && paidAmount && (
+  <div className="partial-payment-alert">
+    <div className="alert-content">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      <div>
+        <strong>Due Amount: ₹{(parseFloat(investmentAmount) - parseFloat(paidAmount)).toLocaleString('en-IN')}</strong>
+        <p>You'll need to pay the remaining amount by the due date</p>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* 🆕 PAYMENT DUE DATE (only show if partial) */}
+{isPartialPayment && (
+  <div className="input-group">
+    <label>Payment Due Date <span className="required">*</span></label>
+    <input
+      type="date"
+      value={paymentDueDate}
+      onChange={(e) => setPaymentDueDate(e.target.value)}
+      min={new Date().toISOString().split('T')[0]} // Can't be in the past
+      required
+    />
+    <span className="input-hint">
+      Select the date by which you'll pay the remaining amount
+    </span>
+  </div>
+)}
+
 
               {/* 🆕 PAYMENT METHOD SELECTION */}
               <div className="input-group">

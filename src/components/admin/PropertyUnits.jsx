@@ -128,7 +128,7 @@ const PropertyUnits = ({ propertyId, units = [], onUnitsUpdate }) => {
   return (
     <div className="property-units">
       <div className="units-header">
-        <h3>🏢 Units</h3>
+        <h3>🏢 Shares</h3>
         <button
           className="btn-add-unit"
           onClick={() => {

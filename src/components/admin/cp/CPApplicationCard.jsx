@@ -66,7 +66,7 @@ const CPApplicationCard = ({ application, onReview }) => {
         <div className="detail-row-app">
           <FiPhone size={16} />
           <span className="detail-label-app">Phone:</span>
-          <span className="detail-value-app">{application.user_phone}</span>
+          <span className="detail-value-app">{application.phone}</span>
         </div>
 
         <div className="detail-row-app">

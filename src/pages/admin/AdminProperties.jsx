@@ -16,7 +16,7 @@ const AdminProperties = () => {
     status: '',
     property_type: ''
   });
-  
+
   // Action modal
   const [actionModal, setActionModal] = useState({
     isOpen: false,
@@ -33,25 +33,25 @@ const AdminProperties = () => {
   }, [filters]);
 
   const fetchProperties = async () => {
-  setLoading(true);
-  try {
-    const response = await adminService.getProperties(filters);
-    
-    console.log('📦 Properties Response:', response); // 👈 For debugging
-    
-    if (response.success && response.results) {
-      setProperties(response.results);
-    } else {
-      console.warn('⚠️ Unexpected response format:', response);
-      setProperties([]);
+    setLoading(true);
+    try {
+      const response = await adminService.getProperties(filters);
+
+      console.log('📦 Properties Response:', response); // 👈 For debugging
+
+      if (response.success && response.results) {
+        setProperties(response.results);
+      } else {
+        console.warn('⚠️ Unexpected response format:', response);
+        setProperties([]);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching properties:', error);
+      toast.error('Failed to load properties');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('❌ Error fetching properties:', error);
-    toast.error('Failed to load properties');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -96,10 +96,10 @@ const AdminProperties = () => {
 
   const handlePropertyAction = async () => {
     setActionLoading(true);
-    
+
     try {
       let response;
-      
+
       if (actionModal.action === 'delete') {
         response = await adminService.deleteProperty(actionModal.propertyId);
       } else {
@@ -134,19 +134,19 @@ const AdminProperties = () => {
     const icons = {
       add: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ),
       view: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="2"/>
-          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+          <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="2" />
+          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
         </svg>
       ),
       edit: (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-          <path d="M18.5 2.50023C18.8978 2.1024 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1024 21.5 2.50023C21.8978 2.89805 22.1213 3.43762 22.1213 4.00023C22.1213 4.56284 21.8978 5.1024 21.5 5.50023L12 15.0002L8 16.0002L9 12.0002L18.5 2.50023Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M18.5 2.50023C18.8978 2.1024 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1024 21.5 2.50023C21.8978 2.89805 22.1213 3.43762 22.1213 4.00023C22.1213 4.56284 21.8978 5.1024 21.5 5.50023L12 15.0002L8 16.0002L9 12.0002L18.5 2.50023Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )
     };
@@ -154,72 +154,71 @@ const AdminProperties = () => {
   };
 
   const columns = [
-  {
-    key: 'id',
-    label: 'ID',
-    sortable: true,
-    render: (value) => `#${value}`
-  },
-  {
-    key: 'name',
-    label: 'Property Name',
-    sortable: true,
-    render: (value, row) => (
-      <div className="property-cell">
-        <strong>{value}</strong>
-        {row.is_featured && <span className="featured-badge">⭐ Featured</span>}
-      </div>
-    )
-  },
-  {
-    key: 'city',
-    label: 'Location',
-    sortable: true,
-    render: (value, row) => `${row.locality || ''} ${value}, ${row.state || ''}`.trim()
-  },
-  {
-    key: 'property_type',
-    label: 'Type',
-    sortable: true,
-    render: (value) => (
-      <span className="type-badge">{value}</span>
-    )
-  },
-  {
-    key: 'total_value',
-    label: 'Total Value',
-    sortable: true,
-    render: (value) => formatCurrency(value)
-  },
-  {
-    key: 'units_available',
-    label: 'Available',
-    sortable: true,
-    render: (value, row) => `${value} / ${row.total_units}`
-  },
-  {
-    key: 'funding_percentage',
-    label: 'Funding',
-    sortable: true,
-    render: (value) => `${value.toFixed(1)}%`
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    sortable: true,
-    render: (value) => <StatusBadge status={value} />
-  },
-  {
-    key: 'created_at',
-    label: 'Created',
-    sortable: true,
-    render: (value) => new Date(value).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    })
-  }
-];
+    {
+      key: 'id',
+      label: 'ID',
+      sortable: true,
+      render: (value) => `#${value}`
+    },
+    {
+      key: 'name',
+      label: 'Property Name',
+      sortable: true,
+      render: (value, row) => (
+        <div className="property-cell">
+          <strong>{value}</strong>
+          {row.is_featured && <span className="featured-badge">⭐ Featured</span>}
+        </div>
+      )
+    },
+    {
+      key: 'city',
+      label: 'Location',
+      sortable: true,
+      render: (value, row) => `${row.locality || ''} ${value}, ${row.state || ''}`.trim()
+    },
+    {
+      key: 'total_value',
+      label: 'Total Value',
+      sortable: true,
+      render: (value) => formatCurrency(value)
+    },
+    {
+      key: 'units_available',
+      label: 'Available',
+      sortable: true,
+      render: (value, row) => `${value} / ${row.total_units}`
+    },
+    {
+      key: 'funding_percentage',
+      label: 'Funding',
+      sortable: true,
+      render: (value) => `${value.toFixed(1)}%`
+    },
+    {
+  key: 'status',
+  label: 'Status',
+  sortable: true,
+  render: (value) => (
+    <span className={`status-badge-${value}`}>
+      {value === 'live' ? 'Live' :
+       value === 'draft' ? 'Draft' :
+       value === 'completed' ? 'Completed' :
+       value === 'funded' ? 'Fully Funded' : value}
+    </span>
+  )
+},
+    {
+      key: 'created_at',
+      label: 'Created',
+      sortable: true,
+      render: (value) => new Date(value).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    }
+  ];
 
   const renderActions = (property) => (
     <div className="table-actions">
@@ -278,7 +277,7 @@ const AdminProperties = () => {
           <h1>Property Management</h1>
           <p className="page-subtitle">Manage all properties on the platform</p>
         </div>
-        <button 
+        <button
           className="btn-primary-admin"
           onClick={() => navigate('/admin/properties/create')}
         >
@@ -307,28 +306,21 @@ const AdminProperties = () => {
           >
             <option value="">All Status</option>
             <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="sold_out">Sold Out</option>
-            <option value="archived">Archived</option>
+            <option value="pending_approval">Pending Approval</option>
+            <option value="approved">Approved</option>
+            <option value="live">Live</option>
+            <option value="funding">Funding</option>
+            <option value="funded">Fully Funded</option>
+            <option value="under_construction">Under Construction</option>
+            <option value="completed">Completed</option>
+            <option value="closed">Closed</option>
           </select>
         </div>
 
-        <div className="filter-group">
-          <select
-            value={filters.property_type}
-            onChange={(e) => handleFilterChange('property_type', e.target.value)}
-            className="filter-select"
-          >
-            <option value="">All Types</option>
-            <option value="residential">Residential</option>
-            <option value="commercial">Commercial</option>
-            <option value="agricultural">Agricultural</option>
-            <option value="industrial">Industrial</option>
-          </select>
-        </div>
 
-        <button 
-          className="btn-filter-reset" 
+
+        <button
+          className="btn-filter-reset"
           onClick={() => setFilters({ search: '', status: '', property_type: '' })}
         >
           Reset Filters

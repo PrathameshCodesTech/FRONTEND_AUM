@@ -67,6 +67,7 @@ const login = async (phoneNumber, otp, inviteCode = null) => { // ← ADD PARAME
   // Navigate based on user role
 const navigateByRole = (userData) => {
   console.log('🚀 navigateByRole called with:', userData);
+  const roleSlug = userData.role?.slug;
   
   if (!userData) {
     console.log('❌ No userData, returning');
@@ -74,9 +75,22 @@ const navigateByRole = (userData) => {
   }
 
   // Admin role
-  if (userData.role?.slug === 'admin' || userData.is_admin) {
+  if (roleSlug === 'admin' || userData.is_admin) {
+  // if (userData.role?.slug === 'admin' || userData.is_admin) {
     console.log('✅ ADMIN DETECTED - Going to /admin');
     navigate('/admin');
+    return;
+  }
+
+    // 2. Relationship Manager ← NEW!
+  if (roleSlug === 'relationship_manager') {
+    navigate('/rm/dashboard');
+    return;
+  }
+  
+  // 3. Developer ← NEW!
+  if (roleSlug === 'developer') {
+    navigate('/developer/dashboard');
     return;
   }
 
@@ -85,7 +99,8 @@ const navigateByRole = (userData) => {
   console.log('  - role.slug:', userData.role?.slug);
   console.log('  - is_cp:', userData.is_cp);
   
-  if (userData.role?.slug === 'channel_partner' || userData.is_cp) {
+  if (roleSlug === 'channel_partner' || userData.is_cp) {
+  // if (userData.role?.slug === 'channel_partner' || userData.is_cp) {
     console.log('✅ CP ROLE CONFIRMED');
     
     const cpStatus = userData.cp_status || userData.onboarding_status;
@@ -135,11 +150,15 @@ const navigateByRole = (userData) => {
 
   // Role checking utilities
   const isAdmin = () => {
-    return user?.role === 'admin' || user?.is_admin === true;
+    return user?.role?.slug === 'admin' || user?.is_admin === true;
   };
 
   const isCP = () => {
-    return user?.role === 'channel_partner' || user?.is_cp === true;
+    return user?.role?.slug === 'channel_partner' || user?.is_cp === true;
+  };
+
+  const isRM = () => {
+    return user?.role?.slug === 'relationship_manager';
   };
 
   const isActiveCP = () => {
@@ -161,6 +180,7 @@ const navigateByRole = (userData) => {
     // Role checking utilities
     isAdmin,
     isCP,
+    isRM,
     isActiveCP,
     hasRole,
   };

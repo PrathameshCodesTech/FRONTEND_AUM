@@ -33,6 +33,51 @@ const cpCommissionService = {
     }
   },
 
+    /**
+   * Get commission statistics
+   * GET /api/cp/commissions/stats/
+   */
+  getStats: async () => {
+    try {
+      const response = await api.get('/cp/commissions/stats/');
+      
+      return {
+        success: true,
+        data: response.data.data || {}
+      };
+    } catch (error) {
+      console.error('❌ Error fetching commission stats:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch stats',
+        data: {}
+      };
+    }
+  },
+
+  /**
+   * Get commission detail
+   * GET /api/cp/commissions/{commission_id}/
+   */
+  getCommissionDetail: async (commissionId) => {
+    try {
+      const response = await api.get(`/cp/commissions/${commissionId}/`);
+      
+      return {
+        success: true,
+        data: response.data.data || {}
+      };
+    } catch (error) {
+      console.error('❌ Error fetching commission detail:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to fetch commission details',
+        data: {}
+      };
+    }
+  },
+
+
   /**
    * Get commission summary
    */

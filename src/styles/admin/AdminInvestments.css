@@ -16,6 +16,8 @@
   margin-bottom: 2rem;
 }
 
+
+
 .stat-card-investment {
   background: white;
   border: 2px solid #e0e0e0;
@@ -26,6 +28,8 @@
   gap: 1.25rem;
   transition: all 0.3s ease;
 }
+
+
 
 .stat-card-investment:hover {
   border-color: #000000;
@@ -121,6 +125,14 @@
 }
 
 /* Responsive */
+
+/* ✅ FORCE 4 COLUMNS ON LARGER SCREENS */
+@media (min-width: 1201px) {
+  .investment-stats {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
 @media (max-width: 1200px) {
   .investment-stats {
     grid-template-columns: repeat(2, 1fr);

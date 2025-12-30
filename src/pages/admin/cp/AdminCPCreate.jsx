@@ -1,6 +1,6 @@
 // AdminCPCreate.jsx
 // =====================================================
-// Admin Create CP Page - Accordion Style Form
+// Admin Create CP Page - Accordion Style Form with Validation
 // =====================================================
 
 import React, { useState, useEffect } from 'react';
@@ -73,6 +73,8 @@ const AdminCPCreate = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   useEffect(() => {
     fetchProperties();
@@ -99,11 +101,95 @@ const AdminCPCreate = () => {
     }));
   };
 
+  // Validation function
+  const validateField = (name, value) => {
+    let error = '';
+
+    switch (name) {
+      case 'first_name':
+        if (!value.trim()) error = 'First name is required';
+        else if (value.trim().length < 2) error = 'First name must be at least 2 characters';
+        break;
+      
+      case 'last_name':
+        if (!value.trim()) error = 'Last name is required';
+        else if (value.trim().length < 2) error = 'Last name must be at least 2 characters';
+        break;
+      
+      case 'email':
+        if (!value.trim()) error = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Please enter a valid email address';
+        break;
+      
+      case 'phone':{
+        const phoneDigits = value.replace(/\D/g, '');
+        if (!value.trim()) error = 'Phone number is required';
+        else if (phoneDigits.length !== 10 && phoneDigits.length !== 12) {
+          error = 'Please enter a valid 10-digit phone number';
+        }
+        break;
+
+        }
+      
+      case 'company_name':
+        if (formData.agent_type === 'company' && !value.trim()) {
+          error = 'Company name is required for company type';
+        }
+        break;
+      
+      case 'pan_number':
+        if (value && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.toUpperCase())) {
+          error = 'Invalid PAN format (e.g., ABCDE1234F)';
+        }
+        break;
+      
+      case 'gst_number':
+        if (value && value.length !== 15) {
+          error = 'GST number must be 15 characters';
+        }
+        break;
+      
+      case 'ifsc_code':
+        if (value && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(value.toUpperCase())) {
+          error = 'Invalid IFSC code format (e.g., HDFC0001234)';
+        }
+        break;
+    }
+
+    return error;
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
+    }));
+
+    // Validate on change if field has been touched
+    if (touched[name]) {
+      const error = validateField(name, newValue);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
+    const error = validateField(name, value);
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
     }));
   };
 
@@ -116,12 +202,72 @@ const AdminCPCreate = () => {
     }));
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    const requiredFields = ['first_name', 'last_name', 'email', 'phone'];
+    
+    requiredFields.forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) newErrors[field] = error;
+    });
+
+    // Check company name if agent type is company
+    if (formData.agent_type === 'company') {
+      const companyError = validateField('company_name', formData.company_name);
+      if (companyError) newErrors.company_name = companyError;
+    }
+
+    // Validate other filled fields
+    ['pan_number', 'gst_number', 'ifsc_code'].forEach(field => {
+      if (formData[field]) {
+        const error = validateField(field, formData[field]);
+        if (error) newErrors[field] = error;
+      }
+    });
+
+    setErrors(newErrors);
+    
+    // Mark all required fields as touched
+    const newTouched = {};
+    requiredFields.forEach(field => {
+      newTouched[field] = true;
+    });
+    if (formData.agent_type === 'company') {
+      newTouched.company_name = true;
+    }
+    setTouched(newTouched);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
-      toast.error('Please fill all required fields');
+    // Validate form
+    if (!validateForm()) {
+      // Show error messages
+      const errorFields = Object.keys(errors).filter(key => errors[key]);
+      if (errorFields.length > 0) {
+        toast.error(`Please fix the following errors: ${errorFields.join(', ')}`);
+        
+        // Auto-open accordion sections with errors
+        const openSections = { ...expandedSections };
+        errorFields.forEach((field) => {
+          if (["first_name", "last_name", "email", "phone", "agent_type", "company_name", "pan_number", "gst_number", "rera_number"].includes(field)) {
+            openSections.identity = true;
+          }
+          if (["partner_tier", "program_start_date", "program_end_date"].includes(field)) {
+            openSections.program = true;
+          }
+          if (["property_ids"].includes(field)) {
+            openSections.authorization = true;
+          }
+          if (["bank_name", "account_number", "ifsc_code", "account_holder_name"].includes(field)) {
+            openSections.bank = true;
+          }
+        });
+        setExpandedSections(openSections);
+      }
       return;
     }
     
@@ -141,6 +287,8 @@ const AdminCPCreate = () => {
       const submitData = {
         ...formData,
         phone: phone,
+        program_start_date: formData.program_start_date || null,
+        program_end_date: formData.program_end_date || null,
         // Convert string numbers to actual numbers
         monthly_target: parseFloat(formData.monthly_target) || 0,
         quarterly_target: parseFloat(formData.quarterly_target) || 0,
@@ -163,7 +311,32 @@ const AdminCPCreate = () => {
       } else {
         toast.error(response.error || 'Failed to create CP');
         if (response.errors) {
+          setErrors(response.errors);
           console.error('Validation errors:', response.errors);
+
+          // Auto-open any accordion section that has an error
+          const openSections = { ...expandedSections };
+          Object.keys(response.errors).forEach((field) => {
+            if (["first_name", "last_name", "email", "phone", "agent_type", "company_name", "pan_number", "gst_number", "rera_number"].includes(field)) {
+              openSections.identity = true;
+            }
+            if (["partner_tier", "program_start_date", "program_end_date"].includes(field)) {
+              openSections.program = true;
+            }
+            if (["property_ids"].includes(field)) {
+              openSections.authorization = true;
+            }
+            if (["dedicated_support_contact", "technical_setup_notes"].includes(field)) {
+              openSections.operational = true;
+            }
+            if (["monthly_target", "quarterly_target", "yearly_target"].includes(field)) {
+              openSections.targets = true;
+            }
+            if (["bank_name", "account_number", "ifsc_code", "account_holder_name"].includes(field)) {
+              openSections.bank = true;
+            }
+          });
+          setExpandedSections(openSections);
         }
       }
     } catch (err) {
@@ -230,9 +403,14 @@ const AdminCPCreate = () => {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="Enter first name"
+                  className={errors.first_name && touched.first_name ? 'error' : ''}
                   required
                 />
+                {errors.first_name && touched.first_name && (
+                  <span className="error-message">{errors.first_name}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -242,9 +420,14 @@ const AdminCPCreate = () => {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="Enter last name"
+                  className={errors.last_name && touched.last_name ? 'error' : ''}
                   required
                 />
+                {errors.last_name && touched.last_name && (
+                  <span className="error-message">{errors.last_name}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -254,9 +437,14 @@ const AdminCPCreate = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="email@example.com"
+                  className={errors.email && touched.email ? 'error' : ''}
                   required
                 />
+                {errors.email && touched.email && (
+                  <span className="error-message">{errors.email}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -266,10 +454,15 @@ const AdminCPCreate = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="9876543210"
+                  className={errors.phone && touched.phone ? 'error' : ''}
                   required
                 />
                 <small>10-digit Indian mobile number</small>
+                {errors.phone && touched.phone && (
+                  <span className="error-message">{errors.phone}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -325,9 +518,14 @@ const AdminCPCreate = () => {
                     name="company_name"
                     value={formData.company_name}
                     onChange={handleInputChange}
+                    onBlur={handleBlur}
                     placeholder="Enter company name"
+                    className={errors.company_name && touched.company_name ? 'error' : ''}
                     required={formData.agent_type === 'company'}
                   />
+                  {errors.company_name && touched.company_name && (
+                    <span className="error-message">{errors.company_name}</span>
+                  )}
                 </div>
               )}
               
@@ -338,9 +536,14 @@ const AdminCPCreate = () => {
                   name="pan_number"
                   value={formData.pan_number}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="ABCDE1234F"
                   maxLength={10}
+                  className={errors.pan_number && touched.pan_number ? 'error' : ''}
                 />
+                {errors.pan_number && touched.pan_number && (
+                  <span className="error-message">{errors.pan_number}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -350,9 +553,14 @@ const AdminCPCreate = () => {
                   name="gst_number"
                   value={formData.gst_number}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="22AAAAA0000A1Z5"
                   maxLength={15}
+                  className={errors.gst_number && touched.gst_number ? 'error' : ''}
                 />
+                {errors.gst_number && touched.gst_number && (
+                  <span className="error-message">{errors.gst_number}</span>
+                )}
               </div>
               
               <div className="form-group">
@@ -603,9 +811,14 @@ const AdminCPCreate = () => {
                   name="ifsc_code"
                   value={formData.ifsc_code}
                   onChange={handleInputChange}
+                  onBlur={handleBlur}
                   placeholder="HDFC0001234"
                   maxLength={11}
+                  className={errors.ifsc_code && touched.ifsc_code ? 'error' : ''}
                 />
+                {errors.ifsc_code && touched.ifsc_code && (
+                  <span className="error-message">{errors.ifsc_code}</span>
+                )}
               </div>
             </div>
           )}
@@ -650,9 +863,13 @@ const AdminCPCreate = () => {
             
             <div className="credentials-box">
               <div className="credential-item">
-                <label>Username (Phone):</label>
-                <code>{createdCredentials.username}</code>
-              </div>
+  <label>Name:</label>
+  <code>{createdCredentials.name || `${formData.first_name} ${formData.last_name}`}</code>
+</div>
+<div className="credential-item">
+  <label>Phone (Login Username):</label>
+  <code>{createdCredentials.username}</code>
+</div>
               <div className="credential-item">
                 <label>Password:</label>
                 <code className="password">{createdCredentials.password}</code>
@@ -670,12 +887,21 @@ const AdminCPCreate = () => {
             <div className="modal-actions">
               <button
                 className="btn-copy"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `Username: ${createdCredentials.username}\nPassword: ${createdCredentials.password}\nEmail: ${createdCredentials.email}`
-                  );
-                  toast.success('Credentials copied to clipboard!');
-                }}
+//                 onClick={() => {
+//                   navigator.clipboard.writeText(
+//   `Name: ${createdCredentials.name || `${formData.first_name} ${formData.last_name}`}\nPhone (Login): ${createdCredentials.username}\nPassword: ${createdCredentials.password}\nEmail: ${createdCredentials.email}`
+// );
+//                   toast.success('Credentials copied to clipboard!');
+//                 }}
+                  onClick={() => {
+  const credentialsText = `Name: ${createdCredentials.name || `${formData.first_name} ${formData.last_name}`}
+Phone (Login): ${createdCredentials.username}
+Password: ${createdCredentials.password}
+Email: ${createdCredentials.email}`;
+  
+  navigator.clipboard.writeText(credentialsText);
+  toast.success('Credentials copied to clipboard!');
+}}
               >
                 Copy Credentials
               </button>

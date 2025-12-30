@@ -1,0 +1,96 @@
+/* ---------- Form Container ---------- */
+.investment-form {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    font-family: "Inter", sans-serif;
+}
+
+/* ---------- Headings ---------- */
+.investment-form h4 {
+    margin: 25px 0 15px;
+    font-size: 18px;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+}
+
+/* ---------- Labels ---------- */
+.investment-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* ---------- Inputs ---------- */
+.investment-form input,
+.investment-form select,
+.investment-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* ---------- Focus State ---------- */
+.investment-form input:focus,
+.investment-form select:focus,
+.investment-form textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* ---------- Readonly ---------- */
+.investment-form input[readonly] {
+    background: #f9fafb;
+    cursor: not-allowed;
+}
+
+/* ---------- Textarea ---------- */
+.investment-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ---------- File Inputs ---------- */
+.investment-form input[type="file"] {
+    padding: 6px;
+}
+
+/* ---------- Submit Button ---------- */
+.investment-form button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.investment-form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35);
+}
+
+.investment-form button:active {
+    transform: translateY(0);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .investment-form {
+        padding: 20px;
+    }
+}

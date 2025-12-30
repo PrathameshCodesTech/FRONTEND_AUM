@@ -16,6 +16,28 @@
   gap: 1rem;
 }
 
+/* In AdminUserDetail.css, update the user-stats-grid: */
+
+.user-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Changed from 2 to 4 columns */
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Add responsive design for smaller screens */
+@media (max-width: 1200px) {
+  .user-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .user-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .btn-back {
   display: flex;
   align-items: center;
@@ -328,7 +350,7 @@
   .info-grid-detail {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .user-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -339,31 +361,31 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .detail-actions {
     flex-wrap: wrap;
   }
-  
+
   .btn-action-detail {
     flex: 1;
     justify-content: center;
   }
-  
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
   }
-  
+
   .card-header-right {
     width: 100%;
     justify-content: flex-start;
   }
-  
+
   .info-grid-detail {
     grid-template-columns: 1fr;
   }
-  
+
   .user-stats-grid {
     grid-template-columns: 1fr;
   }
@@ -500,3 +522,98 @@
   color: var(--text-secondary);
 }
 
+/* AdminUserDetail.css */
+
+/* Invest Button Container */
+.invest-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1rem 0;
+}
+
+.btn-invest {
+  background-color: #4caf50;
+  /* Green button */
+  color: #fff;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-invest:hover {
+  background-color: #45a049;
+}
+
+/* Existing styles remain unchanged */
+.info-section {
+  position: relative;
+  /* establishes positioning context */
+}
+
+.btn-edit-user {
+  position: absolute;
+  right: 0;
+  /* stick to the right edge */
+  top: 0;
+  /* align with the top of the section */
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #667eea;
+}
+
+/* Container for the edit/save/cancel buttons */
+.edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  /* Align to the right */
+  gap: 10px;
+  /* Space between Save and Cancel */
+  margin-top: 10px;
+  /* Optional spacing from fields */
+  width: 100%;
+  /* Take full width of parent container */
+}
+
+/* Optional: styling for individual buttons */
+.btn-save {
+  background-color: #4caf50;
+  /* Green */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  /* Red */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background-color: #45a049;
+}
+
+.btn-cancel:hover {
+  background-color: #d32f2f;
+}
+
+/* Optional: keep the edit button aligned to right when not editing */
+.btn-edit-user {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #555;
+}

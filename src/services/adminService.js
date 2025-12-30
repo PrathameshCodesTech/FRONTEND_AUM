@@ -12,6 +12,12 @@ const adminService = {
   // ========================================
   // USER MANAGEMENT
   // ========================================
+
+    createUser: async(userData) =>{
+    const response = await api.post("/admin/users/create/", userData);
+    return response.data;
+  },
+
   getUsers: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     const response = await api.get(`/admin/users/?${params}`);
@@ -30,6 +36,14 @@ const adminService = {
     return response.data;
   },
 
+   updateUser: async (userId, userData) => {
+  const response = await api.patch(
+    `/admin/users/${userId}/update/`,
+    userData
+  );
+  return response.data;
+  },
+  
   userAction: async (userId, action, reason = "") => {
     const response = await api.post(`/admin/users/${userId}/action/`, {
       action,
@@ -284,9 +298,28 @@ getInvestmentsByCustomer: async (customerId) => {
     data: response.data.data || response.data.results || [],
     total_investments: response.data.total_investments || 0,
     total_amount: response.data.total_amount || 0,
+    total_paid_amount: response.data.total_paid_amount || 0,  // ✅ Add this
+    total_due_amount: response.data.total_due_amount || 0      // ✅ Add this
   };
 },
 
+createInvestmentByAdmin: async (formDataPayload) => {
+      try {
+        const response = await api.post(
+          '/admin/investments/create/',
+          formDataPayload, // now this is FormData
+          {
+            headers: {
+              // Let Axios handle multipart boundary automatically
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        throw error.response?.data || { error: 'Failed to create investment' };
+      }
+  },
 
   // ========================================
   // CP APPLICATION MANAGEMENT
@@ -341,6 +374,28 @@ getInvestmentsByCustomer: async (customerId) => {
       };
     }
   },
+
+
+// adminService.js - FIXED updateCP method
+
+updateCP: async (cpId, cpData) => {
+  try {
+    // ✅ FIXED: Remove /update/ - backend uses PUT /admin/cp/{cpId}/
+    const response = await api.put(`/admin/cp/${cpId}/`, cpData);
+    return {
+      success: true,
+      data: response.data.data || response.data,
+      message: response.data.message || 'CP updated successfully'
+    };
+  } catch (error) {
+    console.error('❌ Update CP Error:', error.response?.data);
+    return {
+      success: false,
+      error: error.response?.data?.error || 'Failed to update CP',
+      errors: error.response?.data?.errors
+    };
+  }
+},
 
   // ========================================
   // CP LIST MANAGEMENT (NEW)
@@ -525,6 +580,28 @@ getInvestmentsByCustomer: async (customerId) => {
   }
 },
 
+
+// ========================================
+// CP APPLICATION NOTIFICATIONS
+// ========================================
+getCPApplicationsPendingCount: async () => {
+  try {
+    const response = await api.get('/admin/cp/applications/', {
+      params: { status: 'pending' }
+    });
+    return {
+      success: true,
+      count: response.data.count || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching CP applications count:', error);
+    return {
+      success: false,
+      count: 0,
+    };
+  }
+},
+
 // Add these methods to adminService.js
 
 // ========================================
@@ -572,6 +649,18 @@ approveCommission: async (commissionId) => {
   }
 },
 
+// ✅ RENAMED: Payout commission (was payoutCommission)
+processCommissionPayout: async (commissionId, paymentReference) => {
+  try {
+    const response = await api.post(`/admin/commissions/${commissionId}/payout/`, {
+      payment_reference: paymentReference
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+},
+
 // Payout commission
 payoutCommission: async (commissionId, paymentReference) => {
   try {
@@ -581,6 +670,91 @@ payoutCommission: async (commissionId, paymentReference) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
+  }
+},
+
+// In adminService.js, add this method in the appropriate section
+
+// ========================================
+// INVESTMENT NOTIFICATIONS
+// ========================================
+// getInvestmentsPendingCount: async () => {
+//   try {
+//     const response = await api.get('/admin/investments/', {
+//       params: { status: 'pending' }
+//     });
+//     return {
+//       success: true,
+//       count: response.data.count || 0,
+//     };
+//   } catch (error) {
+//     console.error('Error fetching pending investments count:', error);
+//     return {
+//       success: false,
+//       count: 0,
+//     };
+//   }
+// },
+// REPLACE THIS METHOD IN adminService.js:
+
+getInvestmentsPendingCount: async () => {
+  try {
+    // Fetch investments with pending_payment and payment_approved statuses
+    const [pendingPayment, paymentApproved] = await Promise.all([
+      api.get('/admin/investments/', { params: { status: 'pending_payment' } }),
+      api.get('/admin/investments/', { params: { status: 'payment_approved' } })
+    ]);
+
+    const totalCount = 
+      (pendingPayment.data.count || 0) + 
+      (paymentApproved.data.count || 0);
+
+    console.log('📊 Pending investments breakdown:', {
+      pending_payment: pendingPayment.data.count || 0,
+      payment_approved: paymentApproved.data.count || 0,
+      total: totalCount
+    });
+
+    return {
+      success: true,
+      count: totalCount,
+    };
+  } catch (error) {
+    console.error('❌ Error fetching pending investments count:', error);
+    return {
+      success: false,
+      count: 0,
+    };
+  }
+},
+
+// You can also add a method to get all notification counts at once
+getAllNotificationCounts: async () => {
+  try {
+    const [cpApplications, investments, kyc] = await Promise.all([
+      api.get('/admin/cp/applications/', { params: { status: 'pending' } }),
+      api.get('/admin/investments/', { params: { status: 'pending' } }),
+      api.get('/admin/kyc/pending/')
+    ]);
+
+    return {
+      success: true,
+      cpApplications: cpApplications.data.count || 0,
+      investments: investments.data.count || 0,
+      kyc: kyc.data.count || 0,
+      total: (cpApplications.data.count || 0) + 
+             (investments.data.count || 0) + 
+             (kyc.data.count || 0)
+    };
+  } catch (error) {
+    console.error('Error fetching notification counts:', error);
+    return {
+      success: false,
+      cpApplications: 0,
+      investments: 0,
+      kyc: 0,
+      total: 0
+    };
   }
 },
 
@@ -606,6 +780,29 @@ bulkPayoutCommissions: async (commissionIds, paymentReference) => {
       throw error.response?.data || { error: 'Failed to create permanent invite' };
     }
   },
+
+
+// adminService.js
+// Make sure this method exists and returns proper format
+
+getCPLeads: async (cpId) => {
+  try {
+    const response = await api.get(`/admin/cp/${cpId}/leads/`);
+    return {
+      success: true,
+      results: response.data.results || response.data,
+      count: response.data.count || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching CP leads:', error);
+    return {
+      success: false,
+      results: [],
+      count: 0,
+      error: error.response?.data?.error || 'Failed to fetch CP leads',
+    };
+  }
+},
 
   // Update property status and visibility
   updatePropertyStatus: async (propertyId, statusData) => {

@@ -31,7 +31,7 @@ const CPInviteForm = ({ onSubmit, onClose }) => {
         [field]: null
       }));
     }
-  };
+  };  
 
   const validateForm = () => {
     const newErrors = {};

@@ -273,7 +273,8 @@ const AdminCPList = () => {
                     <td className="actions-cell">
                       <button
                         className="btn-view-cp"
-                        onClick={() => navigate(`/admin/cp/${cp.id}/detail`)}
+                        // onClick={() => navigate(`/admin/cp/${cp.id}/detail`)}
+                       onClick={() => navigate(`/admin/cp/${cp.id}`)}  // Correct
                       >
                         View
                       </button>

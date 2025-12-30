@@ -133,6 +133,8 @@ import AdminCPList from '../pages/admin/cp/AdminCPList';
 import AdminCPDetail from '../pages/admin/cp/AdminCPDetail'; // ADD THIS
 import AdminCPCreate from '../pages/admin/cp/AdminCPCreate'; // 👈 ADD T
 
+import AdminCPEdit from '../pages/admin/cp/AdminCPEdit'; // 🆕 ADD THIS
+
 // Admin Protected Route Wrapper
 const AdminCPProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -174,7 +176,9 @@ const AdminCPRoutes = () => {
         }
       />
 
-      a<Route path=":cpId/detail" element={<AdminCPDetail />} /> {/* ADD THIS */}
+    
+
+      <Route path=":cpId/detail" element={<AdminCPDetail />} /> {/* ADD THIS */}
        <Route path="create" element={<AdminCPCreate />} /> {/* 👈 ADD THIS */}
 
       {/* CP List */}
@@ -183,6 +187,26 @@ const AdminCPRoutes = () => {
         element={
           <AdminCPProtectedRoute>
             <AdminCPList />
+          </AdminCPProtectedRoute>
+        }
+      />
+
+            {/* Edit CP - MUST come before :cpId detail route */}
+      <Route
+        path="/:cpId/edit"
+        element={
+          <AdminCPProtectedRoute>
+            <AdminCPEdit />
+          </AdminCPProtectedRoute>
+        }
+      />
+
+      {/* CP Detail - MUST come last among :cpId routes */}
+      <Route
+        path="/:cpId"
+        element={
+          <AdminCPProtectedRoute>
+            <AdminCPDetail />
           </AdminCPProtectedRoute>
         }
       />

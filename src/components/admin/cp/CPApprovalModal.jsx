@@ -1,11 +1,11 @@
 // CPApprovalModal.jsx
 // =====================================================
 // Admin Component: CP Approval Modal
-// Approve or reject CP applications
+// Approve or reject CP applications - SHOWS ALL DETAILS
 // =====================================================
 
 import React, { useState } from 'react';
-import { FiX, FiCheck, FiXCircle } from 'react-icons/fi';
+import { FiX, FiCheck, FiXCircle, FiUser, FiPhone, FiMail, FiFileText, FiMapPin, FiDollarSign, FiBriefcase } from 'react-icons/fi';
 import adminService from '../../../services/adminService';
 import '../../../styles/admin/cp/AdminCPComponents.css';
 
@@ -63,17 +63,104 @@ const CPApprovalModal = ({ application, onSubmit, onClose }) => {
           </div>
         )}
 
-        {/* Application Summary */}
-        <div className="application-summary">
-          <h3>{application.user_name}</h3>
-          <div className="summary-details">
-            <div><strong>CP Code:</strong> {application.cp_code}</div>
-            <div><strong>Type:</strong> {application.agent_type}</div>
-            {application.company_name && (
-              <div><strong>Company:</strong> {application.company_name}</div>
-            )}
-            <div><strong>PAN:</strong> {application.pan_number}</div>
+        <div style={{ padding: '1.5rem', maxHeight: '60vh', overflowY: 'auto' }}>
+          {/* ============================================ */}
+          {/* SECTION 1: PERSONAL INFORMATION */}
+          {/* ============================================ */}
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>
+              <FiUser /> Personal Information
+            </h3>
+            <div className="summary-details">
+              <div><strong>Full Name:</strong> {application.user_name || 'N/A'}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FiPhone size={14} />
+                <strong>Phone:</strong> {application.phone || 'N/A'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FiMail size={14} />
+                <strong>Email:</strong> {application.user_email || 'N/A'}
+              </div>
+              <div><strong>CP Code:</strong> <span style={{ fontFamily: 'monospace', color: '#667eea' }}>{application.cp_code}</span></div>
+            </div>
           </div>
+
+          {/* ============================================ */}
+          {/* SECTION 2: BUSINESS INFORMATION */}
+          {/* ============================================ */}
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>
+              <FiBriefcase /> Business Information
+            </h3>
+            <div className="summary-details">
+              <div><strong>Agent Type:</strong> <span style={{ textTransform: 'capitalize' }}>{application.agent_type || 'N/A'}</span></div>
+              
+              {application.company_name && (
+                <div><strong>Company Name:</strong> {application.company_name}</div>
+              )}
+              
+              <div><strong>Source:</strong> <span style={{ textTransform: 'capitalize' }}>{application.source || 'Direct'}</span></div>
+            </div>
+          </div>
+
+          {/* ============================================ */}
+          {/* SECTION 3: LEGAL DOCUMENTS */}
+          {/* ============================================ */}
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>
+              <FiFileText /> Legal Documents
+            </h3>
+            <div className="summary-details">
+              <div><strong>PAN Number:</strong> {application.pan_number || 'Not Provided'}</div>
+              
+              {application.gst_number && (
+                <div><strong>GST Number:</strong> {application.gst_number}</div>
+              )}
+              
+              {application.rera_number && (
+                <div><strong>RERA Number:</strong> {application.rera_number}</div>
+              )}
+            </div>
+          </div>
+
+          {/* ============================================ */}
+          {/* SECTION 4: ADDRESS */}
+          {/* ============================================ */}
+          {application.business_address && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>
+                <FiMapPin /> Business Address
+              </h3>
+              <p style={{ margin: 0, color: '#1a1a1a' }}>{application.business_address}</p>
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* SECTION 5: BANK DETAILS */}
+          {/* ============================================ */}
+          {(application.bank_name || application.account_number) && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>
+                <FiDollarSign /> Bank Details
+              </h3>
+              <div className="summary-details">
+                <div><strong>Bank Name:</strong> {application.bank_name || 'N/A'}</div>
+                <div><strong>Account Holder:</strong> {application.account_holder_name || 'N/A'}</div>
+                <div><strong>Account Number:</strong> {application.account_number || 'N/A'}</div>
+                <div><strong>IFSC Code:</strong> {application.ifsc_code || 'N/A'}</div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* SECTION 6: COMMISSION NOTES (if any) */}
+          {/* ============================================ */}
+          {application.commission_notes && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107' }}>
+              <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem', fontWeight: '700' }}>Commission Notes</h3>
+              <p style={{ margin: 0, color: '#856404' }}>{application.commission_notes}</p>
+            </div>
+          )}
         </div>
 
         {/* Decision Buttons */}

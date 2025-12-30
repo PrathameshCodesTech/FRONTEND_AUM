@@ -55,6 +55,22 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
 
   const formatCurrency = (value) => `₹${Number(value).toLocaleString('en-IN')}`;
 
+const fundingBreakdown = analytics
+  ? [
+      {
+        name: 'Funded',
+        value: Number(analytics.funding_percentage),
+        color: '#10B981',
+      },
+      {
+        name: 'Available',
+        value: 100 - Number(analytics.funding_percentage),
+        color: '#F59E0B',
+      },
+    ]
+  : [];
+
+
   // Render specific chart based on chartType prop
   const renderChart = () => {
     switch(chartType) {
@@ -109,45 +125,45 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
           </div>
         );
 
-      case 'roi':
-        return (
-          <div className="chart-content">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={analytics?.roi_breakdown || []}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  label={({ value }) => `${value}%`}
-                  labelLine={false}
-                >
-                  {analytics?.roi_breakdown?.map((entry, index) => (
-                    <Cell 
-                      key={`roi-${index}`} 
-                      fill={entry.color || COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip formatter={(value) => `${value}%`} />} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="chart-legend">
-              {analytics?.roi_breakdown?.map((item, index) => (
-                <div key={index} className="legend-item">
-                  <span 
-                    className="legend-color" 
-                    style={{ background: item.color || COLORS[index % COLORS.length] }}
-                  />
-                  <span className="legend-text">{item.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+      // case 'roi':
+      //   return (
+      //     <div className="chart-content">
+      //       <ResponsiveContainer width="100%" height={280}>
+      //         <PieChart>
+      //           <Pie
+      //             data={analytics?.roi_breakdown || []}
+      //             dataKey="value"
+      //             nameKey="name"
+      //             cx="50%"
+      //             cy="50%"
+      //             innerRadius={55}
+      //             outerRadius={90}
+      //             label={({ value }) => `${value}%`}
+      //             labelLine={false}
+      //           >
+      //             {analytics?.roi_breakdown?.map((entry, index) => (
+      //               <Cell 
+      //                 key={`roi-${index}`} 
+      //                 fill={entry.color || COLORS[index % COLORS.length]}
+      //               />
+      //             ))}
+      //           </Pie>
+      //           <Tooltip content={<CustomTooltip formatter={(value) => `${value}%`} />} />
+      //         </PieChart>
+      //       </ResponsiveContainer>
+      //       <div className="chart-legend">
+      //         {analytics?.roi_breakdown?.map((item, index) => (
+      //           <div key={index} className="legend-item">
+      //             <span 
+      //               className="legend-color" 
+      //               style={{ background: item.color || COLORS[index % COLORS.length] }}
+      //             />
+      //             <span className="legend-text">{item.name}</span>
+      //           </div>
+      //         ))}
+      //       </div>
+      //     </div>
+      //   );
 
       case 'funding':
         return (
@@ -155,7 +171,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
-                  data={analytics?.funding_breakdown || []}
+                  data={fundingBreakdown}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -164,7 +180,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
-                  {analytics?.funding_breakdown?.map((entry, index) => (
+                  {analytics?.fundingBreakdown.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.color || COLORS[index % COLORS.length]}
@@ -175,7 +191,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
               </PieChart>
             </ResponsiveContainer>
             <div className="chart-legend">
-              {analytics?.funding_breakdown?.map((item, index) => (
+              {analytics?.fundingBreakdown.map((item, index) => (
                 <div key={index} className="legend-item">
                   <span 
                     className="legend-color" 
@@ -193,7 +209,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
           <div className="chart-content">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart 
-                data={analytics?.price_history || []}
+                data={analytics?.portfolio_growth || []}
                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -214,7 +230,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="price" 
+                  dataKey="value" 
                   stroke="#10B981" 
                   strokeWidth={3} 
                   dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
@@ -238,12 +254,12 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                   </div>
                   <h4 className="chart-title-text">Funding Sources</h4>
                 </div>
-              </div>
+              </div> 
               <div className="chart-content">
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
-                      data={analytics?.funding_breakdown || []}
+                      data={analytics?.fundingBreakdown || []}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -252,7 +268,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                       label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
-                      {analytics?.funding_breakdown?.map((entry, index) => (
+                      {analytics?.fundingBreakdown.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={entry.color || COLORS[index % COLORS.length]}
@@ -264,7 +280,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                 </ResponsiveContainer>
               </div>
               <div className="chart-legend">
-                {analytics?.funding_breakdown?.map((item, index) => (
+                {analytics?.fundingBreakdown?.map((item, index) => (
                   <div key={index} className="legend-item">
                     <span 
                       className="legend-color" 
@@ -381,7 +397,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
             </div>
 
             {/* ROI Donut Chart */}
-            <div className="chart-card-box">
+            {/* <div className="chart-card-box">
               <div className="chart-card-header">
                 <div className="chart-title-section">
                   <div className="chart-icon" style={{ background: '#EF444415', color: '#EF4444' }}>
@@ -426,7 +442,7 @@ const AnalyticsCharts = ({ analytics, chartType }) => {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
         );
     }

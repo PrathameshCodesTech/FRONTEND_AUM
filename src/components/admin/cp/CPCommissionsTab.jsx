@@ -31,11 +31,12 @@ const CPCommissionsTab = ({ cpId, cpCode }) => {
   };
 
   const formatCurrency = (amount) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(amount || 0);
+    }).format(numAmount || 0);  
   };
 
   const formatDate = (dateString) => {
