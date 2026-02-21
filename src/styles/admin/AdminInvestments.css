@@ -326,3 +326,342 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
 }
+
+/* ============================================ */
+/* ADD INSTALMENT PAYMENT BUTTON */
+/* ============================================ */
+
+.btn-add-payment {
+  background: #4f46e5 !important;
+  color: white !important;
+  border-color: #4f46e5 !important;
+}
+
+.btn-add-payment:hover {
+  background: #4338ca !important;
+  border-color: #4338ca !important;
+}
+
+/* ============================================ */
+/* INSTALMENT CARD */
+/* ============================================ */
+
+.instalment-card {
+  margin-top: 1.5rem;
+}
+
+.instalment-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.instalment-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.instalment-summary-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.instalment-summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.instalment-summary-value.success { color: #10B981; }
+.instalment-summary-value.warning { color: #f59e0b; }
+
+.instalment-list-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.instalment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.instalment-item {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.instalment-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.instalment-num {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.instalment-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.instalment-status-badge.verified { background: #d1fae5; color: #065f46; }
+.instalment-status-badge.pending  { background: #fef3c7; color: #92400e; }
+.instalment-status-badge.failed   { background: #fee2e2; color: #991b1b; }
+
+.instalment-item-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.5rem 1rem;
+  padding: 0.875rem 1rem;
+}
+
+.instalment-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #374151;
+  gap: 0.5rem;
+}
+
+.instalment-row span:first-child {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.instalment-rejection {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  color: #dc2626;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.instalment-item-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.btn-instalment-approve {
+  padding: 0.4rem 1rem;
+  background: #10B981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-instalment-approve:hover { background: #059669; }
+
+.btn-instalment-reject {
+  padding: 0.4rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-instalment-reject:hover { background: #dc2626; }
+
+.btn-instalment-receipt {
+  padding: 0.4rem 1rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-instalment-receipt:hover { background: #333; }
+
+.instalment-loading,
+.instalment-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 1.25rem 0;
+}
+
+/* ============================================ */
+/* ADMIN MODAL (generic — add payment / reject) */
+/* ============================================ */
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.admin-modal-box {
+  background: white;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.75rem 2rem 1.5rem;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  color: #374151;
+  transition: background 0.2s;
+}
+
+.admin-modal-close:hover { background: #e5e7eb; }
+
+.admin-modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem;
+}
+
+.admin-modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+}
+
+.admin-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 1rem;
+}
+
+.admin-modal-cancel {
+  padding: 0.55rem 1.25rem;
+  background: white;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-modal-cancel:hover { border-color: #9ca3af; }
+
+.admin-modal-confirm {
+  padding: 0.55rem 1.5rem;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-modal-confirm:hover { background: #4338ca; }
+
+.admin-modal-confirm.reject-confirm {
+  background: #ef4444;
+}
+
+.admin-modal-confirm.reject-confirm:hover {
+  background: #dc2626;
+}
+
+/* ── Add Payment Form ── */
+.add-payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.apm-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.apm-group label {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.apm-group input,
+.apm-group select,
+.apm-group textarea {
+  padding: 0.6rem 0.875rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.apm-group input:focus,
+.apm-group select:focus,
+.apm-group textarea:focus {
+  border-color: #4f46e5;
+}
+
+.req { color: #ef4444; }

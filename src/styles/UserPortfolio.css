@@ -416,3 +416,9 @@
     justify-content: center;
   }
 }
+
+.progress-bar-fill,
+.progress-bar-fill::before,
+.progress-bar-fill::after {
+  animation: none !important;
+}

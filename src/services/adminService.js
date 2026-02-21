@@ -303,6 +303,45 @@ getInvestmentsByCustomer: async (customerId) => {
   };
 },
 
+// ---- Instalment Payment Management ----
+
+  getAdminInvestmentPayments: async (investmentId) => {
+    const response = await api.get(`/admin/investments/${investmentId}/payments/`);
+    return response.data;
+  },
+
+  adminAddInstalmentPayment: async (investmentId, formData) => {
+    const response = await api.post(
+      `/admin/investments/${investmentId}/add-payment/`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  },
+
+  adminApprovePayment: async (investmentId, paymentId) => {
+    const response = await api.post(
+      `/admin/investments/${investmentId}/payments/${paymentId}/approve/`
+    );
+    return response.data;
+  },
+
+  adminRejectPayment: async (investmentId, paymentId, reason = '') => {
+    const response = await api.post(
+      `/admin/investments/${investmentId}/payments/${paymentId}/reject/`,
+      { reason }
+    );
+    return response.data;
+  },
+
+  adminDownloadPaymentReceipt: async (investmentId, paymentId) => {
+    const response = await api.get(
+      `/admin/investments/${investmentId}/payments/${paymentId}/receipt/download/`,
+      { responseType: 'blob' }
+    );
+    return response;
+  },
+
 createInvestmentByAdmin: async (formDataPayload) => {
       try {
         const response = await api.post(

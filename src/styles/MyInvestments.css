@@ -1008,69 +1008,124 @@
   to { transform: rotate(360deg); }
 }
 
-/* 🆕 Receipt Modal Specific Styles */
+/* Receipt Modal */
 .receipt-modal {
-  max-width: 650px;
+  max-width: 600px;
+  padding: 0 !important;
+  overflow: hidden;
 }
 
-.receipt-detail-content {
-  margin-bottom: 1.5rem;
+/* Paper-style receipt preview */
+.receipt-preview {
+  background: #ffffff;
+  padding: 2rem 2.25rem 1.5rem;
+  font-family: 'Times New Roman', Times, serif;
+  color: #111;
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
-.receipt-property-info {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  padding: 1.25rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #3b82f6;
-}
-
-.receipt-property-info h3 {
+.receipt-preview-title {
+  text-align: center;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  letter-spacing: 2px;
+  margin: 0 0 0.75rem;
+  font-family: 'Times New Roman', Times, serif;
+  color: #111;
 }
 
-.receipt-property-info p {
-  color: #6b7280;
+.receipt-divider {
+  border: none;
+  border-top: 1.5px solid #111;
+  margin: 0 0 1rem;
+}
+
+.receipt-footer-divider {
+  border: none;
+  border-top: 0.75px solid #aaa;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.receipt-meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.receipt-from-line {
+  margin: 0 0 0.25rem;
   font-size: 0.9375rem;
 }
 
-.receipt-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.receipt-towards {
+  margin: 0.2rem 0;
+  font-size: 0.9375rem;
 }
 
-.receipt-info-item {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
+/* Payment details table */
+.receipt-payment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.9rem;
+}
+
+.receipt-payment-table td {
+  border: 1px solid #111;
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}
+
+.receipt-table-label {
+  background: #f0f0f0;
+  font-weight: 600;
+  width: 45%;
+  color: #111;
+}
+
+.receipt-table-value {
+  color: #333;
+}
+
+.receipt-ack-text {
+  font-size: 0.875rem;
+  color: #333;
+  margin: 0.5rem 0 0;
+}
+
+/* Partial payment extra info */
+.receipt-partial-info {
+  background: #fafafa;
   border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-top: 1rem;
+  font-family: inherit;
+}
+
+.partial-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
 }
 
-.info-label {
+.receipt-powered-by {
+  text-align: center;
   font-size: 0.8125rem;
-  color: #6b7280;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: #111827;
+  color: #888;
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
 
 .receipt-modal-actions {
   display: flex;
   gap: 0.875rem;
+  padding: 1rem 2.25rem 1.5rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
 }
 
 /* ============================================ */
@@ -1231,4 +1286,275 @@
   .receipt-modal-actions {
     flex-direction: column;
   }
+}
+
+/* ============================================ */
+/* PAY REMAINING MODAL */
+/* ============================================ */
+
+.pay-remaining-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+  max-width: 540px;
+}
+
+.pay-remaining-summary {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 0 0 1.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pay-remaining-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 0 0 1rem;
+}
+
+.pay-remaining-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pay-remaining-form .form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.pay-remaining-form .form-group input,
+.pay-remaining-form .form-group select,
+.pay-remaining-form .form-group textarea {
+  padding: 0.6rem 0.875rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pay-remaining-form .form-group input:focus,
+.pay-remaining-form .form-group select:focus,
+.pay-remaining-form .form-group textarea:focus {
+  border-color: #4f46e5;
+}
+
+.pay-remaining-form .required {
+  color: #ef4444;
+}
+
+.due-payment-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================ */
+/* PAYMENT HISTORY MODAL */
+/* ============================================ */
+
+.payment-history-modal {
+  max-height: 85vh;
+  overflow-y: auto;
+  max-width: 560px;
+}
+
+.payment-history-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #f0f4ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  padding: 0.875rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.payment-summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.summary-label {
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summary-value.paid {
+  color: #2563eb;
+}
+
+.summary-value.cleared {
+  color: #10b981;
+}
+
+.summary-value.due {
+  color: #f59e0b;
+}
+
+.payment-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.payment-history-item {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.payment-history-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.payment-num-badge {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+}
+
+.payment-status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.payment-status-badge.VERIFIED {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.payment-status-badge.PENDING {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.payment-status-badge.FAILED {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.payment-history-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.payment-receipt-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-view-payment-receipt {
+  padding: 0.45rem 1rem;
+  background: white;
+  color: #4f46e5;
+  border: 1.5px solid #4f46e5;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-view-payment-receipt:hover {
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-download-payment-receipt {
+  padding: 0.45rem 1rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-download-payment-receipt:hover {
+  background: #333;
+}
+
+.no-instalments-text {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+.rejection-reason {
+  font-size: 0.8rem;
+  color: #dc2626;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* ============================================ */
+/* INVESTMENT CARD FOOTER (history button) */
+/* ============================================ */
+
+.investment-card-footer {
+  padding: 0.75rem 1.5rem 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-payment-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  background: white;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-payment-history:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
 }

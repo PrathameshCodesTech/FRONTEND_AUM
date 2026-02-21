@@ -1173,7 +1173,7 @@ useEffect(() => {
                 Invest Now
               </button>
 
-              <button
+              {/* <button
                 className="view-analytics-btn"
                 onClick={() => navigate(`/analytics/${property.slug}`)}
               >
@@ -1182,7 +1182,7 @@ useEffect(() => {
                   <path d="M18 9L13 14L9 10L3 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 View Property Analytics
-              </button>
+              </button> */}
 
               <p className="disclaimer">
                 * Returns are indicative and subject to market conditions

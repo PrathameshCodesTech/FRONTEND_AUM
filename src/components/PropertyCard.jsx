@@ -244,7 +244,7 @@ const PropertyCard = ({ property }) => {
             >
               Explore
             </button>
-            <button
+            {/* <button
               className="btn-view-analytics"
               onClick={(e) => {
                 e.stopPropagation();
@@ -268,7 +268,7 @@ const PropertyCard = ({ property }) => {
                 />
               </svg>
               View Analytics
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

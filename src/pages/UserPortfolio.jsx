@@ -311,14 +311,14 @@ const payoutHistoryData = Array.isArray(analyticsData?.payout_history)
                     >
                       <span className="progress-text">{analyticsData.funding_percentage || 72}% Funded</span>
                     </div> */}
-                    <div 
-  className="progress-bar-fill"
-  style={{ width: `${Math.min(100, fundingPercentage)}%` }}
->
-  <span className="progress-text">
-    {fundingPercentage}% Funded
-  </span>
-</div>
+                  <div 
+                    className="progress-bar-fill"
+                    style={{ width: `${Math.min(100, fundingPercentage)}%` }}
+                  >
+                    <span className="progress-text">
+                      {fundingPercentage}% Funded
+                    </span>
+                  </div>
 
                   </div>
                   <div className="funding-details">

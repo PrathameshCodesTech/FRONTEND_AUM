@@ -121,15 +121,51 @@ createInvestmentWithPayment: async (formData) => {
     }
   },
   // Check if user has CP relation
-checkCPRelation: async () => {
-  try {
-    const response = await api.get('/wallet/investments/check-cp-relation/');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || { error: 'Failed to check CP relation' };
-  }
-},
-  
+  checkCPRelation: async () => {
+    try {
+      const response = await api.get('/wallet/investments/check-cp-relation/');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to check CP relation' };
+    }
+  },
+
+  // Submit a remaining (instalment) payment
+  payRemaining: async (investmentId, formData) => {
+    try {
+      const response = await api.post(
+        `/wallet/investments/${investmentId}/pay-remaining/`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to submit payment' };
+    }
+  },
+
+  // Get all instalment payments for an investment
+  getInvestmentPayments: async (investmentId) => {
+    try {
+      const response = await api.get(`/wallet/investments/${investmentId}/payments/`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to fetch payments' };
+    }
+  },
+
+  // Download PDF receipt for a specific verified instalment payment
+  downloadPaymentReceipt: async (investmentId, paymentId) => {
+    try {
+      const response = await api.get(
+        `/wallet/investments/${investmentId}/payments/${paymentId}/receipt/download/`,
+        { responseType: 'blob' }
+      );
+      return response;
+    } catch (error) {
+      throw error.response?.data || { error: 'Failed to download receipt' };
+    }
+  },
 };
 
 export default investmentService;

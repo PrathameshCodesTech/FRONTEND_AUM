@@ -15,7 +15,7 @@ const AdminInvestmentDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Action modal
+  // Action modal (approve / reject investment)
   const [actionModal, setActionModal] = useState({
     isOpen: false,
     action: null,
@@ -25,9 +25,52 @@ const AdminInvestmentDetail = () => {
   });
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Instalment payments
+  const [instalmentPayments, setInstalmentPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(false);
+
+  // Add instalment payment modal
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [addPaymentForm, setAddPaymentForm] = useState({
+    amount: '',
+    payment_method: '',
+    payment_date: '',
+    payment_notes: '',
+    payment_mode: '',
+    transaction_no: '',
+    pos_slip_image: null,
+    cheque_number: '',
+    cheque_date: '',
+    bank_name: '',
+    ifsc_code: '',
+    branch_name: '',
+    cheque_image: null,
+    neft_rtgs_ref_no: '',
+  });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+
+  // Reject instalment modal
+  const [rejectModal, setRejectModal] = useState({ open: false, paymentId: null });
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectingPayment, setRejectingPayment] = useState(false);
+
   useEffect(() => {
     fetchInvestmentDetail();
   }, [investmentId]);
+
+  const fetchInstalmentPayments = async (id) => {
+    setLoadingPayments(true);
+    try {
+      const response = await adminService.getAdminInvestmentPayments(id);
+      if (response.success) {
+        setInstalmentPayments(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to load instalment payments:', err);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
 
   const fetchInvestmentDetail = async () => {
     setLoading(true);
@@ -40,6 +83,10 @@ const AdminInvestmentDetail = () => {
       
       if (response.success) {
         setInvestment(response.data);
+        // Auto-load instalment payments if partial payment investment
+        if (response.data.is_partial_payment) {
+          fetchInstalmentPayments(investmentId);
+        }
       } else {
         throw new Error(response.message || 'Failed to fetch investment');
       }
@@ -112,6 +159,118 @@ const AdminInvestmentDetail = () => {
       toast.error(error.message || 'Action failed');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // ── Add Payment form handlers ──────────────────────────
+  const handleAddPaymentFormChange = (e) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setAddPaymentForm(prev => ({ ...prev, [name]: files[0] }));
+    } else {
+      setAddPaymentForm(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const resetAddPaymentForm = () => {
+    setAddPaymentForm({
+      amount: '', payment_method: '', payment_date: '', payment_notes: '',
+      payment_mode: '', transaction_no: '', pos_slip_image: null,
+      cheque_number: '', cheque_date: '', bank_name: '', ifsc_code: '',
+      branch_name: '', cheque_image: null, neft_rtgs_ref_no: '',
+    });
+  };
+
+  const handleSubmitAddPayment = async () => {
+    if (!addPaymentForm.amount || parseFloat(addPaymentForm.amount) <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    if (!addPaymentForm.payment_method) {
+      toast.error('Please select a payment method');
+      return;
+    }
+    if (!addPaymentForm.payment_date) {
+      toast.error('Please enter the payment date');
+      return;
+    }
+    setSubmittingPayment(true);
+    try {
+      const formData = new FormData();
+      Object.entries(addPaymentForm).forEach(([key, val]) => {
+        if (val !== null && val !== undefined && val !== '') {
+          formData.append(key, val);
+        }
+      });
+      const response = await adminService.adminAddInstalmentPayment(investmentId, formData);
+      if (response.success) {
+        toast.success('Instalment payment added successfully');
+        setShowAddPaymentModal(false);
+        resetAddPaymentForm();
+        fetchInstalmentPayments(investmentId);
+      }
+    } catch (err) {
+      const msg = err?.errors ? Object.values(err.errors).flat().join(', ') : err?.message || 'Failed to add payment';
+      toast.error(msg);
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
+  const handleApproveInstalment = async (paymentId) => {
+    try {
+      const response = await adminService.adminApprovePayment(investmentId, paymentId);
+      if (response.success) {
+        toast.success('Payment approved successfully');
+        fetchInstalmentPayments(investmentId);
+        fetchInvestmentDetail(); // refresh due_amount on the investment
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to approve payment');
+    }
+  };
+
+  const handleOpenRejectModal = (paymentId) => {
+    setRejectReason('');
+    setRejectModal({ open: true, paymentId });
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectReason.trim()) {
+      toast.error('Please provide a rejection reason');
+      return;
+    }
+    setRejectingPayment(true);
+    try {
+      const response = await adminService.adminRejectPayment(investmentId, rejectModal.paymentId, rejectReason);
+      if (response.success) {
+        toast.success('Payment rejected');
+        setRejectModal({ open: false, paymentId: null });
+        fetchInstalmentPayments(investmentId);
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to reject payment');
+    } finally {
+      setRejectingPayment(false);
+    }
+  };
+
+  const handleDownloadInstalmentReceipt = async (paymentId, paymentIdStr) => {
+    try {
+      toast.loading('Generating receipt...', { id: 'admin-dl-receipt' });
+      const response = await adminService.adminDownloadPaymentReceipt(investmentId, paymentId);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt-${paymentIdStr || paymentId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Receipt downloaded', { id: 'admin-dl-receipt' });
+    } catch (err) {
+      toast.error('Failed to download receipt', { id: 'admin-dl-receipt' });
     }
   };
 
@@ -276,9 +435,24 @@ const AdminInvestmentDetail = () => {
             </button>
           )}
 
+          {/* Add Instalment Payment button */}
+          {investment && investment.is_partial_payment && parseFloat(investment.due_amount) > 0 && (
+            <button
+              className="btn-action-detail btn-add-payment"
+              onClick={() => setShowAddPaymentModal(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+                <path d="M2 10H22" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 14V16M12 14V12M12 14H10M12 14H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Add Instalment Payment
+            </button>
+          )}
+
           {canCancel && (
-            <button 
-              className="btn-action-detail btn-cancel" 
+            <button
+              className="btn-action-detail btn-cancel"
               onClick={() => openActionModal('cancel')}
             >
               {renderIcon('cancel')}
@@ -780,6 +954,290 @@ const AdminInvestmentDetail = () => {
           )}
         </div>
       </div>
+
+      {/* ── Partial Payment Summary + Instalment History ── */}
+      {investment.is_partial_payment && (
+        <div className="detail-card instalment-card">
+          <div className="card-header">
+            <div className="card-header-left">
+              <div>
+                <h2>Partial Payment Details</h2>
+                <p className="investment-date">Multiple instalments tracking</p>
+              </div>
+            </div>
+            {parseFloat(investment.due_amount) > 0 && (
+              <button
+                className="btn-action-detail btn-add-payment"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => setShowAddPaymentModal(true)}
+              >
+                + Add Instalment Payment
+              </button>
+            )}
+          </div>
+
+          <div className="card-content">
+            {/* Summary row */}
+            <div className="instalment-summary">
+              <div className="instalment-summary-item">
+                <span className="instalment-summary-label">Total Commitment</span>
+                <span className="instalment-summary-value">{formatCurrency(investment.minimum_required_amount)}</span>
+              </div>
+              <div className="instalment-summary-item">
+                <span className="instalment-summary-label">Total Paid</span>
+                <span className="instalment-summary-value success">{formatCurrency(investment.amount)}</span>
+              </div>
+              <div className="instalment-summary-item">
+                <span className="instalment-summary-label">Outstanding Due</span>
+                <span className={`instalment-summary-value ${parseFloat(investment.due_amount) > 0 ? 'warning' : 'success'}`}>
+                  {formatCurrency(investment.due_amount)}
+                </span>
+              </div>
+              {investment.payment_due_date && (
+                <div className="instalment-summary-item">
+                  <span className="instalment-summary-label">Due Date</span>
+                  <span className="instalment-summary-value">
+                    {new Date(investment.payment_due_date).toLocaleDateString('en-IN')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Instalment #1 — the initial payment */}
+            <h4 className="instalment-list-title">Payment History</h4>
+            <div className="instalment-list">
+              <div className="instalment-item">
+                <div className="instalment-item-header">
+                  <span className="instalment-num">Instalment #1 (Initial)</span>
+                  <span className={`instalment-status-badge ${(investment.payment_status || 'PENDING').toLowerCase()}`}>
+                    {investment.payment_status || 'PENDING'}
+                  </span>
+                </div>
+                <div className="instalment-item-body">
+                  <div className="instalment-row"><span>Amount</span><strong>{formatCurrency(investment.amount)}</strong></div>
+                  <div className="instalment-row"><span>Method</span><span>{investment.payment_method_display || investment.payment_method || 'N/A'}</span></div>
+                  <div className="instalment-row"><span>Date</span><span>{investment.payment_date ? new Date(investment.payment_date).toLocaleDateString('en-IN') : 'N/A'}</span></div>
+                </div>
+              </div>
+
+              {/* Additional instalments */}
+              {loadingPayments ? (
+                <div className="instalment-loading">Loading instalment payments...</div>
+              ) : instalmentPayments.length === 0 ? (
+                <p className="instalment-empty">No additional instalment payments yet.</p>
+              ) : (
+                instalmentPayments.map((payment) => (
+                  <div key={payment.id} className="instalment-item">
+                    <div className="instalment-item-header">
+                      <span className="instalment-num">Instalment #{payment.payment_number}</span>
+                      <span className={`instalment-status-badge ${payment.payment_status.toLowerCase()}`}>
+                        {payment.payment_status_display || payment.payment_status}
+                      </span>
+                    </div>
+
+                    <div className="instalment-item-body">
+                      <div className="instalment-row"><span>Amount</span><strong>{formatCurrency(payment.amount)}</strong></div>
+                      <div className="instalment-row"><span>Method</span><span>{payment.payment_method_display || payment.payment_method || 'N/A'}</span></div>
+                      <div className="instalment-row"><span>Payment Date</span><span>{payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-IN') : 'N/A'}</span></div>
+                      <div className="instalment-row"><span>Due Before</span><span>{formatCurrency(payment.due_amount_before)}</span></div>
+                      <div className="instalment-row">
+                        <span>Due After</span>
+                        <strong style={{ color: parseFloat(payment.due_amount_after) === 0 ? '#10B981' : '#f59e0b' }}>
+                          {formatCurrency(payment.due_amount_after)}
+                        </strong>
+                      </div>
+                      {payment.payment_status === 'FAILED' && payment.payment_rejection_reason && (
+                        <div className="instalment-rejection">Rejected: {payment.payment_rejection_reason}</div>
+                      )}
+                      {payment.payment_approved_at && (
+                        <div className="instalment-row"><span>Processed At</span><span>{new Date(payment.payment_approved_at).toLocaleString('en-IN')}</span></div>
+                      )}
+                      {payment.approved_by_name && (
+                        <div className="instalment-row"><span>Processed By</span><span>{payment.approved_by_name}</span></div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="instalment-item-actions">
+                      {payment.payment_status === 'PENDING' && (
+                        <>
+                          <button
+                            className="btn-instalment-approve"
+                            onClick={() => handleApproveInstalment(payment.id)}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="btn-instalment-reject"
+                            onClick={() => handleOpenRejectModal(payment.id)}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      {payment.payment_status === 'VERIFIED' && (
+                        <button
+                          className="btn-instalment-receipt"
+                          onClick={() => handleDownloadInstalmentReceipt(payment.id, payment.payment_id)}
+                        >
+                          Download Receipt
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ADD INSTALMENT PAYMENT MODAL ── */}
+      {showAddPaymentModal && investment && (
+        <div className="admin-modal-overlay" onClick={() => !submittingPayment && setShowAddPaymentModal(false)}>
+          <div className="admin-modal-box add-payment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="admin-modal-close" onClick={() => setShowAddPaymentModal(false)} disabled={submittingPayment}>×</button>
+
+            <h2 className="admin-modal-title">Add Instalment Payment</h2>
+            <p className="admin-modal-subtitle">
+              {investment.property_details?.name || 'Investment'} &mdash; Outstanding: {formatCurrency(investment.due_amount)}
+            </p>
+
+            <div className="add-payment-form">
+              <div className="apm-group">
+                <label>Amount <span className="req">*</span></label>
+                <input type="number" name="amount" value={addPaymentForm.amount}
+                  onChange={handleAddPaymentFormChange}
+                  placeholder={`Max ₹${parseFloat(investment.due_amount).toLocaleString('en-IN')}`}
+                  max={parseFloat(investment.due_amount)} min="1" step="0.01" />
+              </div>
+
+              <div className="apm-group">
+                <label>Payment Method <span className="req">*</span></label>
+                <select name="payment_method" value={addPaymentForm.payment_method} onChange={handleAddPaymentFormChange}>
+                  <option value="">Select method</option>
+                  <option value="ONLINE">Online</option>
+                  <option value="POS">POS</option>
+                  <option value="DRAFT_CHEQUE">Draft / Cheque</option>
+                  <option value="NEFT_RTGS">NEFT / RTGS</option>
+                </select>
+              </div>
+
+              <div className="apm-group">
+                <label>Payment Date <span className="req">*</span></label>
+                <input type="datetime-local" name="payment_date" value={addPaymentForm.payment_date} onChange={handleAddPaymentFormChange} />
+              </div>
+
+              {/* ONLINE / POS */}
+              {(addPaymentForm.payment_method === 'ONLINE' || addPaymentForm.payment_method === 'POS') && (
+                <>
+                  <div className="apm-group">
+                    <label>Payment Mode (UPI / Card / NetBanking)</label>
+                    <input type="text" name="payment_mode" value={addPaymentForm.payment_mode} onChange={handleAddPaymentFormChange} placeholder="e.g. UPI" />
+                  </div>
+                  <div className="apm-group">
+                    <label>Transaction Number <span className="req">*</span></label>
+                    <input type="text" name="transaction_no" value={addPaymentForm.transaction_no} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  {addPaymentForm.payment_method === 'POS' && (
+                    <div className="apm-group">
+                      <label>POS Slip Image</label>
+                      <input type="file" name="pos_slip_image" accept="image/*" onChange={handleAddPaymentFormChange} />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* DRAFT_CHEQUE */}
+              {addPaymentForm.payment_method === 'DRAFT_CHEQUE' && (
+                <>
+                  <div className="apm-group">
+                    <label>Cheque Number <span className="req">*</span></label>
+                    <input type="text" name="cheque_number" value={addPaymentForm.cheque_number} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>Cheque Date <span className="req">*</span></label>
+                    <input type="date" name="cheque_date" value={addPaymentForm.cheque_date} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>Bank Name <span className="req">*</span></label>
+                    <input type="text" name="bank_name" value={addPaymentForm.bank_name} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>IFSC Code <span className="req">*</span></label>
+                    <input type="text" name="ifsc_code" value={addPaymentForm.ifsc_code} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>Branch Name <span className="req">*</span></label>
+                    <input type="text" name="branch_name" value={addPaymentForm.branch_name} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>Cheque Image</label>
+                    <input type="file" name="cheque_image" accept="image/*" onChange={handleAddPaymentFormChange} />
+                  </div>
+                </>
+              )}
+
+              {/* NEFT_RTGS */}
+              {addPaymentForm.payment_method === 'NEFT_RTGS' && (
+                <>
+                  <div className="apm-group">
+                    <label>NEFT / RTGS Reference No. <span className="req">*</span></label>
+                    <input type="text" name="neft_rtgs_ref_no" value={addPaymentForm.neft_rtgs_ref_no} onChange={handleAddPaymentFormChange} />
+                  </div>
+                  <div className="apm-group">
+                    <label>Bank Name</label>
+                    <input type="text" name="bank_name" value={addPaymentForm.bank_name} onChange={handleAddPaymentFormChange} />
+                  </div>
+                </>
+              )}
+
+              <div className="apm-group">
+                <label>Notes</label>
+                <textarea name="payment_notes" value={addPaymentForm.payment_notes} onChange={handleAddPaymentFormChange} rows="2" placeholder="Optional notes" />
+              </div>
+            </div>
+
+            <div className="admin-modal-actions">
+              <button className="admin-modal-cancel" onClick={() => setShowAddPaymentModal(false)} disabled={submittingPayment}>
+                Cancel
+              </button>
+              <button className="admin-modal-confirm" onClick={handleSubmitAddPayment} disabled={submittingPayment}>
+                {submittingPayment ? 'Adding...' : 'Add Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── REJECT INSTALMENT MODAL ── */}
+      {rejectModal.open && (
+        <div className="admin-modal-overlay" onClick={() => !rejectingPayment && setRejectModal({ open: false, paymentId: null })}>
+          <div className="admin-modal-box reject-payment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="admin-modal-close" onClick={() => setRejectModal({ open: false, paymentId: null })} disabled={rejectingPayment}>×</button>
+            <h2 className="admin-modal-title">Reject Payment</h2>
+            <p className="admin-modal-subtitle">Please provide a reason for rejection.</p>
+            <div className="apm-group" style={{ padding: '0 0 1rem' }}>
+              <label>Rejection Reason <span className="req">*</span></label>
+              <textarea
+                rows="3"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter reason for rejection..."
+                style={{ width: '100%', padding: '0.6rem 0.875rem', border: '1.5px solid #d1d5db', borderRadius: '8px', fontSize: '0.9rem', boxSizing: 'border-box' }}
+              />
+            </div>
+            <div className="admin-modal-actions">
+              <button className="admin-modal-cancel" onClick={() => setRejectModal({ open: false, paymentId: null })} disabled={rejectingPayment}>
+                Cancel
+              </button>
+              <button className="admin-modal-confirm reject-confirm" onClick={handleConfirmReject} disabled={rejectingPayment}>
+                {rejectingPayment ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Modal */}
       <ActionModal

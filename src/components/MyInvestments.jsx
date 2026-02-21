@@ -659,20 +659,39 @@ const MyInvestments = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Due Payment Modal State
+  // Pay Remaining Modal State
   const [showDuePaymentModal, setShowDuePaymentModal] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    payment_method: '',
+    payment_date: '',
+    payment_notes: '',
+    payment_mode: '',
+    transaction_no: '',
+    pos_slip_image: null,
+    cheque_number: '',
+    cheque_date: '',
+    bank_name: '',
+    ifsc_code: '',
+    branch_name: '',
+    cheque_image: null,
+    neft_rtgs_ref_no: '',
+  });
 
   // Receipt Modal State
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
+  // Payment History Modal State
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyInvestment, setHistoryInvestment] = useState(null);
+
   const tabs = [
     { id: 'all', label: 'All Investments' },
-    { id: 'approved', label: 'Approved' },
-    { id: 'pending', label: 'Pending' },
-    { id: 'rejected', label: 'Rejected' },
     { id: 'receipts', label: 'Transactions' },
   ];
 
@@ -756,11 +775,27 @@ const MyInvestments = () => {
     navigate('/properties');
   };
 
+  // Parse date-only strings as local dates to avoid timezone drift
+  const toLocalDate = (dateString) => {
+    if (!dateString) return null;
+    if (dateString instanceof Date) return dateString;
+    // Strip time portion from ISO datetime strings (e.g. "2026-02-10T12:30:00Z")
+    const datePart = typeof dateString === 'string' ? dateString.split('T')[0] : String(dateString);
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const [y, m, d] = parts.map(Number);
+      return new Date(y, m - 1, d);
+    }
+    return new Date(dateString);
+  };
+
   const getDaysRemaining = (dueDate) => {
-    if (!dueDate) return null;
+    const due = toLocalDate(dueDate);
+    if (!due) return null;
     const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due - today;
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const end = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+    const diffTime = end - start;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -775,7 +810,8 @@ const MyInvestments = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    const date = toLocalDate(dateString);
+    return date.toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -784,28 +820,102 @@ const MyInvestments = () => {
 
   const handlePayDue = (investment) => {
     setSelectedInvestment(investment);
+    setPaymentForm({
+      amount: '',
+      payment_method: '',
+      payment_date: '',
+      payment_notes: '',
+      payment_mode: '',
+      transaction_no: '',
+      pos_slip_image: null,
+      cheque_number: '',
+      cheque_date: '',
+      bank_name: '',
+      ifsc_code: '',
+      branch_name: '',
+      cheque_image: null,
+      neft_rtgs_ref_no: '',
+    });
     setShowDuePaymentModal(true);
   };
 
+  const handlePaymentFormChange = (e) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setPaymentForm(prev => ({ ...prev, [name]: files[0] }));
+    } else {
+      setPaymentForm(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
   const handleSubmitDuePayment = async () => {
+    if (!paymentForm.amount || parseFloat(paymentForm.amount) <= 0) {
+      toast.error('Please enter a valid payment amount');
+      return;
+    }
+    if (!paymentForm.payment_method) {
+      toast.error('Please select a payment method');
+      return;
+    }
+    if (!paymentForm.payment_date) {
+      toast.error('Please enter the payment date');
+      return;
+    }
+
     setProcessingPayment(true);
     try {
-      toast.success('Redirecting to payment...', {
-        duration: 2000
+      const formData = new FormData();
+      Object.entries(paymentForm).forEach(([key, val]) => {
+        if (val !== null && val !== undefined && val !== '') {
+          formData.append(key, val);
+        }
       });
-      
-      console.log('Processing payment for:', selectedInvestment);
-      
-      setTimeout(() => {
-        setShowDuePaymentModal(false);
-        setProcessingPayment(false);
-        fetchInvestments();
-      }, 2000);
-      
+
+      await investmentService.payRemaining(selectedInvestment.id, formData);
+      toast.success('Payment submitted! Awaiting admin approval.');
+      setShowDuePaymentModal(false);
+      fetchInvestments();
     } catch (error) {
-      toast.error(error.message || 'Payment failed');
+      const msg = error?.message || error?.detail || 'Payment submission failed';
+      toast.error(msg);
       console.error('Payment error:', error);
+    } finally {
       setProcessingPayment(false);
+    }
+  };
+
+  const handleViewPaymentHistory = async (investment) => {
+    setHistoryInvestment(investment);
+    setShowPaymentHistoryModal(true);
+    setLoadingHistory(true);
+    try {
+      const response = await investmentService.getInvestmentPayments(investment.id);
+      if (response.success) {
+        setPaymentHistory(response.data);
+      }
+    } catch (error) {
+      toast.error('Failed to load payment history');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleDownloadPaymentReceipt = async (investmentId, payment) => {
+    try {
+      toast.loading('Generating receipt...', { id: 'dl-payment-receipt' });
+      const response = await investmentService.downloadPaymentReceipt(investmentId, payment.id);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt-${payment.payment_id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Receipt downloaded!', { id: 'dl-payment-receipt' });
+    } catch (error) {
+      toast.error('Failed to download receipt', { id: 'dl-payment-receipt' });
     }
   };
 
@@ -1102,17 +1212,18 @@ const MyInvestments = () => {
                             )}
                           </div>
                           
-                          <button 
-                            className="pay-due-button"
-                            onClick={() => handlePayDue(investment)}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Pay Now - {formatCurrency(investment.due_amount)}
-                          </button>
+                          <div className="due-payment-buttons">
+                            <button
+                              className="pay-due-button"
+                              onClick={() => handlePayDue(investment)}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+                                <path d="M2 10H22" stroke="currentColor" strokeWidth="2"/>
+                              </svg>
+                              Pay Remaining
+                            </button>
+                          </div>
                         </div>
                       )}
 
@@ -1175,6 +1286,23 @@ const MyInvestments = () => {
     </div>
   )}
 </div>
+
+                      {/* Payment History Button — shown when investment has/had instalments */}
+                      {(investment.is_partial_payment || investment.instalment_count > 0) && (
+                        <div className="investment-card-footer">
+                          <button
+                            className="btn-payment-history"
+                            onClick={() => handleViewPaymentHistory(investment)}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                            </svg>
+                            {investment.is_partial_payment ? 'Payment History' : '✓ Fully Paid · History'}
+                          </button>
+                        </div>
+                      )}
+
                     </div>
                   );
                 })
@@ -1185,217 +1313,416 @@ const MyInvestments = () => {
 
       </div>
 
-      {/* DUE PAYMENT MODAL */}
+      {/* PAY REMAINING MODAL */}
       {showDuePaymentModal && selectedInvestment && (
         <div className="modal-overlay" onClick={() => !processingPayment && setShowDuePaymentModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="modal-close" 
+          <div className="modal-content pay-remaining-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close"
               onClick={() => !processingPayment && setShowDuePaymentModal(false)}
               disabled={processingPayment}
-            >
-              ×
-            </button>
-            
+            >×</button>
+
             <div className="modal-header">
-              <h2 className="modal-title">Complete Payment</h2>
-              <p className="modal-subtitle">
-                Pay the remaining amount to complete your investment
-              </p>
+              <h2 className="modal-title">Pay Remaining Amount</h2>
+              <p className="modal-subtitle">{selectedInvestment.property?.name}</p>
             </div>
 
-            <div className="payment-summary">
-              <div className="summary-header">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" 
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <h3>{selectedInvestment.property?.name}</h3>
+            {/* Summary */}
+            <div className="pay-remaining-summary">
+              <div className="summary-row">
+                <span>Total Investment:</span>
+                <strong>{formatCurrency(selectedInvestment.minimum_required_amount)}</strong>
               </div>
-              
-              <div className="summary-details">
-                <div className="summary-row">
-                  <span>Amount Already Paid:</span>
-                  <strong>{formatCurrency(selectedInvestment.amount)}</strong>
-                </div>
-                <div className="summary-row highlight">
-                  <span>Due Amount:</span>
-                  <strong className="due-amount-large">
-                    {formatCurrency(selectedInvestment.due_amount)}
-                  </strong>
-                </div>
-                <div className="summary-row">
-                  <span>Due Date:</span>
-                  <strong>{formatDate(selectedInvestment.payment_due_date)}</strong>
-                </div>
-                <div className="summary-divider"></div>
-                <div className="summary-row total">
-                  <span>Total Investment:</span>
-                  <strong>{formatCurrency(selectedInvestment.minimum_required_amount)}</strong>
-                </div>
+              <div className="summary-row">
+                <span>Paid So Far:</span>
+                <strong style={{ color: '#10B981' }}>{formatCurrency(selectedInvestment.amount)}</strong>
+              </div>
+              <div className="summary-row highlight">
+                <span>Outstanding Due:</span>
+                <strong style={{ color: '#f59e0b' }}>{formatCurrency(selectedInvestment.due_amount)}</strong>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="pay-remaining-form">
+              <div className="form-group">
+                <label>Amount to Pay <span className="required">*</span></label>
+                <input
+                  type="number"
+                  name="amount"
+                  placeholder={`Max: ₹${parseFloat(selectedInvestment.due_amount).toLocaleString('en-IN')}`}
+                  value={paymentForm.amount}
+                  onChange={handlePaymentFormChange}
+                  max={parseFloat(selectedInvestment.due_amount)}
+                  min="1"
+                  step="0.01"
+                />
               </div>
 
-              {getDaysRemaining(selectedInvestment.payment_due_date) < 0 && (
-                <div className="overdue-notice">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span>
-                    This payment is overdue by {Math.abs(getDaysRemaining(selectedInvestment.payment_due_date))} days
-                  </span>
-                </div>
+              <div className="form-group">
+                <label>Payment Method <span className="required">*</span></label>
+                <select name="payment_method" value={paymentForm.payment_method} onChange={handlePaymentFormChange}>
+                  <option value="">Select method</option>
+                  <option value="ONLINE">Online</option>
+                  <option value="POS">POS</option>
+                  <option value="DRAFT_CHEQUE">Draft / Cheque</option>
+                  <option value="NEFT_RTGS">NEFT / RTGS</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Payment Date <span className="required">*</span></label>
+                <input
+                  type="datetime-local"
+                  name="payment_date"
+                  value={paymentForm.payment_date}
+                  onChange={handlePaymentFormChange}
+                />
+              </div>
+
+              {/* ONLINE / POS fields */}
+              {(paymentForm.payment_method === 'ONLINE' || paymentForm.payment_method === 'POS') && (
+                <>
+                  <div className="form-group">
+                    <label>Payment Mode (UPI / Card / NetBanking)</label>
+                    <input type="text" name="payment_mode" value={paymentForm.payment_mode} onChange={handlePaymentFormChange} placeholder="e.g. UPI" />
+                  </div>
+                  <div className="form-group">
+                    <label>Transaction Number <span className="required">*</span></label>
+                    <input type="text" name="transaction_no" value={paymentForm.transaction_no} onChange={handlePaymentFormChange} placeholder="Transaction ID" />
+                  </div>
+                  {paymentForm.payment_method === 'POS' && (
+                    <div className="form-group">
+                      <label>POS Slip Image</label>
+                      <input type="file" name="pos_slip_image" accept="image/*" onChange={handlePaymentFormChange} />
+                    </div>
+                  )}
+                </>
               )}
+
+              {/* DRAFT_CHEQUE fields */}
+              {paymentForm.payment_method === 'DRAFT_CHEQUE' && (
+                <>
+                  <div className="form-group">
+                    <label>Cheque Number <span className="required">*</span></label>
+                    <input type="text" name="cheque_number" value={paymentForm.cheque_number} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Cheque Date <span className="required">*</span></label>
+                    <input type="date" name="cheque_date" value={paymentForm.cheque_date} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Bank Name <span className="required">*</span></label>
+                    <input type="text" name="bank_name" value={paymentForm.bank_name} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>IFSC Code <span className="required">*</span></label>
+                    <input type="text" name="ifsc_code" value={paymentForm.ifsc_code} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Branch Name <span className="required">*</span></label>
+                    <input type="text" name="branch_name" value={paymentForm.branch_name} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Cheque Image</label>
+                    <input type="file" name="cheque_image" accept="image/*" onChange={handlePaymentFormChange} />
+                  </div>
+                </>
+              )}
+
+              {/* NEFT_RTGS fields */}
+              {paymentForm.payment_method === 'NEFT_RTGS' && (
+                <>
+                  <div className="form-group">
+                    <label>NEFT / RTGS Reference No. <span className="required">*</span></label>
+                    <input type="text" name="neft_rtgs_ref_no" value={paymentForm.neft_rtgs_ref_no} onChange={handlePaymentFormChange} />
+                  </div>
+                  <div className="form-group">
+                    <label>Bank Name</label>
+                    <input type="text" name="bank_name" value={paymentForm.bank_name} onChange={handlePaymentFormChange} />
+                  </div>
+                </>
+              )}
+
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea name="payment_notes" value={paymentForm.payment_notes} onChange={handlePaymentFormChange} rows="2" placeholder="Optional notes" />
+              </div>
             </div>
 
             <div className="modal-actions">
-              <button 
-                className="btn-cancel" 
-                onClick={() => setShowDuePaymentModal(false)}
-                disabled={processingPayment}
-              >
+              <button className="btn-cancel" onClick={() => setShowDuePaymentModal(false)} disabled={processingPayment}>
                 Cancel
               </button>
-              <button 
-                className="btn-confirm"
-                onClick={handleSubmitDuePayment}
-                disabled={processingPayment}
-              >
-                {processingPayment ? (
-                  <>
-                    <span className="spinner"></span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                      <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M2 10H22" stroke="currentColor" strokeWidth="2"/>
-                    </svg>
-                    Proceed to Payment
-                  </>
-                )}
+              <button className="btn-confirm" onClick={handleSubmitDuePayment} disabled={processingPayment}>
+                {processingPayment ? 'Submitting...' : 'Submit Payment'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🆕 RECEIPT DETAILS MODAL */}
+      {/* PAYMENT HISTORY MODAL */}
+      {showPaymentHistoryModal && historyInvestment && (
+        <div className="modal-overlay" onClick={() => setShowPaymentHistoryModal(false)}>
+          <div className="modal-content payment-history-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowPaymentHistoryModal(false)}>×</button>
+            <div className="modal-header">
+              <h2 className="modal-title">Payment History</h2>
+              <p className="modal-subtitle">{historyInvestment.property?.name}</p>
+            </div>
+
+            {loadingHistory ? (
+              <div className="loading-state">Loading payment history...</div>
+            ) : (
+              <>
+                {/* Summary strip */}
+                <div className="payment-history-summary">
+                  <div className="payment-summary-item">
+                    <span className="summary-label">Total Commitment</span>
+                    <strong className="summary-value">{formatCurrency(historyInvestment.minimum_required_amount || historyInvestment.amount)}</strong>
+                  </div>
+                  <div className="payment-summary-item">
+                    <span className="summary-label">Total Paid</span>
+                    <strong className="summary-value paid">{formatCurrency(historyInvestment.amount)}</strong>
+                  </div>
+                  <div className="payment-summary-item">
+                    <span className="summary-label">Still Due</span>
+                    {parseFloat(historyInvestment.due_amount || 0) === 0 ? (
+                      <strong className="summary-value cleared">Fully Paid ✓</strong>
+                    ) : (
+                      <strong className="summary-value due">
+                        {formatCurrency(historyInvestment.due_amount)}
+                      </strong>
+                    )}
+                  </div>
+                </div>
+
+              <div className="payment-history-list">
+                {/* Initial payment (from investment itself) */}
+                {(() => {
+                  const initialAmount = paymentHistory.length > 0
+                    ? parseFloat(historyInvestment.minimum_required_amount || 0) - parseFloat(paymentHistory[0].due_amount_before || 0)
+                    : parseFloat(historyInvestment.amount || 0);
+                  return (
+                <div className="payment-history-item">
+                  <div className="payment-history-meta">
+                    <span className="payment-num-badge">Instalment #1</span>
+                    <span className={`payment-status-badge ${historyInvestment.payment_status || 'PENDING'}`}>
+                      {historyInvestment.payment_status || 'PENDING'}
+                    </span>
+                  </div>
+                  <div className="payment-history-row">
+                    <span>Amount:</span>
+                    <strong>{formatCurrency(initialAmount)}</strong>
+                  </div>
+                  <div className="payment-history-row">
+                    <span>Method:</span>
+                    <span>{historyInvestment.payment_method_display || historyInvestment.payment_method || 'N/A'}</span>
+                  </div>
+                  <div className="payment-history-row">
+                    <span>Date:</span>
+                    <span>{formatDate(historyInvestment.payment_date || historyInvestment.investment_date)}</span>
+                  </div>
+                  {historyInvestment.status === 'approved' && (
+                    <div className="payment-receipt-actions">
+                      <button
+                        className="btn-view-payment-receipt"
+                        onClick={() => handleViewReceipt({
+                          ...historyInvestment,
+                          amount: initialAmount,
+                        })}
+                      >
+                        View Receipt
+                      </button>
+                      <button
+                        className="btn-download-payment-receipt"
+                        onClick={() => handleDownloadReceipt(historyInvestment)}
+                      >
+                        Download Receipt
+                      </button>
+                    </div>
+                  )}
+                </div>
+                  );
+                })()}
+
+                {/* Instalment payments */}
+                {paymentHistory.length === 0 ? (
+                  <p className="no-instalments-text">No additional instalment payments yet.</p>
+                ) : (
+                  paymentHistory.map((payment) => (
+                    <div key={payment.id} className="payment-history-item">
+                      <div className="payment-history-meta">
+                        <span className="payment-num-badge">Instalment #{payment.payment_number}</span>
+                        <span className={`payment-status-badge ${payment.payment_status}`}>
+                          {payment.payment_status_display || payment.payment_status}
+                        </span>
+                      </div>
+                      <div className="payment-history-row">
+                        <span>Amount:</span>
+                        <strong>{formatCurrency(payment.amount)}</strong>
+                      </div>
+                      <div className="payment-history-row">
+                        <span>Method:</span>
+                        <span>{payment.payment_method_display || payment.payment_method || 'N/A'}</span>
+                      </div>
+                      <div className="payment-history-row">
+                        <span>Date:</span>
+                        <span>{formatDate(payment.payment_date || payment.created_at)}</span>
+                      </div>
+                      <div className="payment-history-row">
+                        <span>Due Before:</span>
+                        <span>{formatCurrency(payment.due_amount_before)}</span>
+                      </div>
+                      <div className="payment-history-row">
+                        <span>Due After:</span>
+                        <strong style={{ color: parseFloat(payment.due_amount_after) === 0 ? '#10B981' : '#f59e0b' }}>
+                          {formatCurrency(payment.due_amount_after)}
+                        </strong>
+                      </div>
+                      {payment.payment_status === 'VERIFIED' && (
+                        <div className="payment-receipt-actions">
+                          <button
+                            className="btn-view-payment-receipt"
+                            onClick={() => handleViewReceipt({
+                              receipt_number: payment.payment_id,
+                              approved_at: payment.payment_approved_at,
+                              investment_date: payment.payment_date,
+                              customer_name: historyInvestment.customer_name,
+                              amount: payment.amount,
+                              property: historyInvestment.property,
+                              payment_method: payment.payment_method,
+                              payment_method_display: payment.payment_method_display,
+                              transaction_no: payment.transaction_no || payment.neft_rtgs_ref_no || payment.cheque_number,
+                              payment_date: payment.payment_date,
+                              cheque_date: payment.cheque_date,
+                              bank_name: payment.bank_name,
+                              is_partial_payment: true,
+                              minimum_required_amount: historyInvestment.minimum_required_amount,
+                              due_amount: payment.due_amount_after,
+                              payment_due_date: historyInvestment.payment_due_date,
+                            })}
+                          >
+                            View Receipt
+                          </button>
+                          <button
+                            className="btn-download-payment-receipt"
+                            onClick={() => handleDownloadPaymentReceipt(historyInvestment.id, payment)}
+                          >
+                            Download Receipt
+                          </button>
+                        </div>
+                      )}
+                      {payment.payment_status === 'FAILED' && payment.payment_rejection_reason && (
+                        <p className="rejection-reason">Rejected: {payment.payment_rejection_reason}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* RECEIPT DETAILS MODAL */}
       {showReceiptModal && selectedReceipt && (
         <div className="modal-overlay" onClick={() => setShowReceiptModal(false)}>
           <div className="modal-content receipt-modal" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="modal-close" 
-              onClick={() => setShowReceiptModal(false)}
-            >
-              ×
-            </button>
-            
-            <div className="modal-header">
-              <h2 className="modal-title">Receipt Details</h2>
-              <p className="modal-subtitle">
-                Receipt #{selectedReceipt.receipt_number || selectedReceipt.id}
-              </p>
-            </div>
+            <button className="modal-close" onClick={() => setShowReceiptModal(false)}>×</button>
 
-            <div className="receipt-detail-content">
-              {selectedReceipt.property && (
-                <div className="receipt-property-info">
-                  <h3>{selectedReceipt.property.name}</h3>
-                  <p>{selectedReceipt.property.city}, {selectedReceipt.property.state}</p>
+            {/* Receipt Preview — matches PDF layout */}
+            <div className="receipt-preview">
+              {/* Title */}
+              <h2 className="receipt-preview-title">PAYMENT RECEIPT</h2>
+              <hr className="receipt-divider" />
+
+              {/* Receipt No. + Date */}
+              <div className="receipt-meta-row">
+                <span>Receipt No.: <strong>{selectedReceipt.receipt_number || selectedReceipt.investment_id || selectedReceipt.id}</strong></span>
+                <span>Date: <strong>{formatDate(selectedReceipt.approved_at || selectedReceipt.investment_date)}</strong></span>
+              </div>
+
+              {/* Received from */}
+              <p className="receipt-from-line">
+                Received with thanks from <strong>Mr./Ms. {selectedReceipt.customer_name || selectedReceipt.customer?.name || 'Customer'}</strong>
+                &nbsp;&nbsp; the sum of <strong>&#8377; {Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+              </p>
+
+              {/* Towards + Project */}
+              <p className="receipt-towards"><strong>Towards:</strong> &nbsp;{selectedReceipt.property?.name}</p>
+              <p className="receipt-towards"><strong>Project Name:</strong> &nbsp;{selectedReceipt.property?.name}</p>
+
+              {/* Payment Details Table */}
+              <table className="receipt-payment-table">
+                <tbody>
+                  <tr>
+                    <td className="receipt-table-label">Mode of Payment</td>
+                    <td className="receipt-table-value">{selectedReceipt.payment_method_display || selectedReceipt.payment_method || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td className="receipt-table-label">Transaction / Reference No.</td>
+                    <td className="receipt-table-value">{selectedReceipt.transaction_id || selectedReceipt.transaction_no || 'N/A'}</td>
+                  </tr>
+                  <tr>
+                    <td className="receipt-table-label">Dated</td>
+                    <td className="receipt-table-value">{formatDate(selectedReceipt.payment_date || selectedReceipt.cheque_date || selectedReceipt.approved_at)}</td>
+                  </tr>
+                  <tr>
+                    <td className="receipt-table-label">Bank</td>
+                    <td className="receipt-table-value">{selectedReceipt.bank_name || 'N/A'}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p className="receipt-ack-text">This receipt is issued as an acknowledgement of payment received.</p>
+
+              {/* Partial payment info (extra, below main layout) */}
+              {selectedReceipt.is_partial_payment && (
+                <div className="receipt-partial-info">
+                  <div className="partial-row">
+                    <span>Total Investment:</span>
+                    <strong>{formatCurrency(selectedReceipt.minimum_required_amount || selectedReceipt.amount)}</strong>
+                  </div>
+                  <div className="partial-row">
+                    <span>Amount Paid:</span>
+                    <strong style={{ color: '#10B981' }}>{formatCurrency(selectedReceipt.amount)}</strong>
+                  </div>
+                  <div className="partial-row">
+                    <span>Due Amount:</span>
+                    <strong style={{ color: selectedReceipt.due_amount > 0 ? '#f59e0b' : '#10B981' }}>
+                      {formatCurrency(selectedReceipt.due_amount || 0)}
+                    </strong>
+                  </div>
+                  {selectedReceipt.payment_due_date && (
+                    <div className="partial-row">
+                      <span>Due Date:</span>
+                      <strong style={{ color: getDaysRemaining(selectedReceipt.payment_due_date) < 0 ? '#ef4444' : '#6b7280' }}>
+                        {formatDate(selectedReceipt.payment_due_date)}
+                      </strong>
+                    </div>
+                  )}
                 </div>
               )}
 
-          <div className="receipt-info-grid">
-  {/* 🆕 Total Investment (if partial) */}
-  {selectedReceipt.is_partial_payment && (
-    <div className="receipt-info-item">
-      <span className="info-label">Total Investment</span>
-      <span className="info-value">
-        {formatCurrency(selectedReceipt.minimum_required_amount || selectedReceipt.amount)}
-      </span>
-    </div>
-  )}
-  
-  <div className="receipt-info-item">
-    <span className="info-label">Amount Paid</span>
-    <span className="info-value" style={{ color: '#10B981', fontWeight: 'bold' }}>
-      {formatCurrency(selectedReceipt.amount)}
-    </span>
-  </div>
+              <hr className="receipt-footer-divider" />
+              <p className="receipt-powered-by">Powered by AssetKart</p>
+            </div>
 
-  {/* 🆕 Due Amount (if partial) */}
-  {selectedReceipt.is_partial_payment && (
-    <>
-      <div className="receipt-info-item">
-        <span className="info-label">Due Amount</span>
-        <span className="info-value" style={{ 
-          color: selectedReceipt.due_amount > 0 ? '#f59e0b' : '#10B981',
-          fontWeight: 'bold'
-        }}>
-          {formatCurrency(selectedReceipt.due_amount || 0)}
-        </span>
-      </div>
-      
-      {selectedReceipt.payment_due_date && (
-        <div className="receipt-info-item">
-          <span className="info-label">Payment Due Date</span>
-          <span className="info-value" style={{
-            color: getDaysRemaining(selectedReceipt.payment_due_date) < 0 ? '#ef4444' : '#6b7280'
-          }}>
-            {formatDate(selectedReceipt.payment_due_date)}
-          </span>
-        </div>
-      )}
-    </>
-  )}
-
-
-                <div className="receipt-info-item">
-                  <span className="info-label">Shares Purchased</span>
-                  <span className="info-value">{selectedReceipt.units_purchased}</span>
-                </div>
-                <div className="receipt-info-item">
-                  <span className="info-label">Investment Date</span>
-                  <span className="info-value">{formatDate(selectedReceipt.investment_date || selectedReceipt.created_at)}</span>
-                </div>
-                <div className="receipt-info-item">
-                  <span className="info-label">Payment Method</span>
-                  <span className="info-value">{selectedReceipt.payment_method || 'Online'}</span>
-                </div>
-                <div className="receipt-info-item">
-                  <span className="info-label">Transaction ID</span>
-                  <span className="info-value">{selectedReceipt.transaction_id || 'N/A'}</span>
-                </div>
-                <div className="receipt-info-item">
-                  <span className="info-label">Status</span>
-                  <span className={`status-badge ${selectedReceipt.status}`}>
-                    {selectedReceipt.status}
-                  </span>
-                </div> 
-              </div>
-
-              <div className="receipt-modal-actions">
-                <button 
-                  className="btn-download-receipt"
-                  onClick={() => handleDownloadReceipt(selectedReceipt)}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15V19C21 19.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V16" 
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Download PDF
-                </button>
-                <button 
-                  className="btn-view-receipt"
-                  onClick={() => setShowReceiptModal(false)}
-                >
-                  Close
-                </button>
-              </div>
+            <div className="receipt-modal-actions">
+              <button className="btn-download-receipt" onClick={() => handleDownloadReceipt(selectedReceipt)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15V19C21 19.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V16"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Download PDF
+              </button>
+              <button className="btn-view-receipt" onClick={() => setShowReceiptModal(false)}>Close</button>
             </div>
           </div>
         </div>
