@@ -70,7 +70,7 @@
 
 /* ── Upload Button ── */
 .btn-add-doc {
-  background: #2563eb;
+  background: #000000;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -79,11 +79,13 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .btn-add-doc:hover {
-  background: #1d4ed8;
+  background: #111111;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* ── Upload Form ── */
@@ -226,6 +228,28 @@
   color: #2563eb;
   font-weight: 600;
   margin: 6px 0 0;
+}
+
+.property-help-text {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.form-group select {
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: #111827;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.form-group select:focus {
+  border-color: #2563eb;
 }
 
 .no-users-text {

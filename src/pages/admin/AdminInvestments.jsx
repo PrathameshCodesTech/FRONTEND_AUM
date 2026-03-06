@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import adminService from '../../services/adminService';
 import DataTable from '../../components/admin/DataTable';
-import StatusBadge from '../../components/admin/StatusBadge';
 import ActionModal from '../../components/admin/ActionModal';
 import '../../styles/admin/AdminInvestments.css';
+
+const PAGE_SIZE = 12;
 
 const AdminInvestments = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const AdminInvestments = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -76,6 +78,7 @@ const AdminInvestments = () => {
   };
 
   const handleFilterChange = (key, value) => {
+    setCurrentPage(1);
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -342,7 +345,7 @@ const AdminInvestments = () => {
           {row.is_deleted ? (
             <span className="status-badge-deleted">Deleted</span>
           ) : (
-            <StatusBadge status={value} />
+            <span className="status-text">{value || '-'}</span>
           )}
         </div>
       )
@@ -576,21 +579,64 @@ const AdminInvestments = () => {
 
         <button 
           className="btn-filter-reset" 
-          onClick={() => setFilters({ search: '', status: '', property: '', date_from: '', date_to: '', include_deleted: false })}
+          onClick={() => { setCurrentPage(1); setFilters({ search: '', status: '', property: '', date_from: '', date_to: '', include_deleted: false }); }}
         >
           {renderIcon('filter')} Reset Filters
         </button>
       </div>
 
       {/* Data Table */}
-      <DataTable
-        columns={columns}
-        data={investments}
-        loading={loading}
-        onRowClick={(investment) => navigate(`/admin/investments/${investment.id}`)}
-        actions={renderActions}
-        emptyMessage="No investments found"
-      />
+      {(() => {
+        const totalPages = Math.ceil(investments.length / PAGE_SIZE);
+        const paginated = investments.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+        const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
+        return (
+          <>
+            <DataTable
+              columns={columns}
+              data={paginated}
+              loading={loading}
+              onRowClick={(investment) => navigate(`/admin/investments/${investment.id}`)}
+              actions={renderActions}
+              emptyMessage="No investments found"
+            />
+
+            {totalPages > 1 && (
+              <div className="investments-pagination">
+                <span className="pagination-info">
+                  Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, investments.length)} of {investments.length}
+                </span>
+                <div className="pagination-controls">
+                  <button
+                    className="pagination-btn"
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    ‹ Prev
+                  </button>
+                  {pages.map(p => (
+                    <button
+                      key={p}
+                      className={`pagination-btn${p === currentPage ? ' active' : ''}`}
+                      onClick={() => setCurrentPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <button
+                    className="pagination-btn"
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next ›
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Action Modal */}
       <ActionModal

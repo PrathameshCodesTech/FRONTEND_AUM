@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import adminService from '../../services/adminService';
 import DataTable from '../../components/admin/DataTable';
-import StatusBadge from '../../components/admin/StatusBadge';
 import ActionModal from '../../components/admin/ActionModal';
 import '../../styles/admin/AdminKYC.css';
 
@@ -27,6 +26,20 @@ const AdminKYC = () => {
     userName: ''
   });
   const [actionLoading, setActionLoading] = useState(false);
+
+  const formatKycStatus = (status) => {
+    switch (status) {
+      case 'verified':
+        return 'Verified';
+      case 'under_review':
+        return 'Under Review';
+      case 'rejected':
+        return 'Rejected';
+      case 'pending':
+      default:
+        return 'Pending';
+    }
+  };
 
   useEffect(() => {
     fetchKYC();
@@ -149,10 +162,9 @@ const fetchKYC = async () => {
       label: 'Aadhaar',
       sortable: true,
       render: (value) => (
-        <StatusBadge 
-          status={value ? 'verified' : 'pending'} 
-          label={value ? 'Verified' : 'Pending'}
-        />
+        <span className="status-text">
+          {value ? 'Verified' : 'Pending'}
+        </span>
       )
     },
     {
@@ -160,10 +172,9 @@ const fetchKYC = async () => {
       label: 'PAN',
       sortable: true,
       render: (value) => (
-        <StatusBadge 
-          status={value ? 'verified' : 'pending'} 
-          label={value ? 'Verified' : 'Pending'}
-        />
+        <span className="status-text">
+          {value ? 'Verified' : 'Pending'}
+        </span>
       )
     },
     {
@@ -171,10 +182,9 @@ const fetchKYC = async () => {
       label: 'Bank',
       sortable: true,
       render: (value) => (
-        <StatusBadge 
-          status={value ? 'verified' : 'pending'} 
-          label={value ? 'Verified' : 'Optional'}
-        />
+        <span className="status-text">
+          {value ? 'Verified' : 'Optional'}
+        </span>
       )
     },
     {
@@ -182,17 +192,20 @@ const fetchKYC = async () => {
       label: 'PAN-Aadhaar Link',
       sortable: true,
       render: (value) => (
-        <StatusBadge 
-          status={value ? 'verified' : 'pending'} 
-          label={value ? 'Linked' : 'Not Linked'}
-        />
+        <span className="status-text">
+          {value ? 'Linked' : 'Not Linked'}
+        </span>
       )
     },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (value) => <StatusBadge status={value} />
+      render: (value) => (
+        <span className="status-text">
+          {formatKycStatus(value)}
+        </span>
+      )
     },
     {
       key: 'created_at',

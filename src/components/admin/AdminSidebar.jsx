@@ -126,7 +126,7 @@ const AdminSidebar = ({ collapsed, onToggle, currentPath }) => {
     <div className={`admin-sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          {!collapsed && <span className="logo-text">AUM Admin</span>}
+          {!collapsed && <span className="logo-text">Assetkart Admin</span>}
         </div>
         <button 
           className="sidebar-toggle" 

@@ -11,15 +11,15 @@
 .admin-cp-applications-page,
 .admin-cp-list-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding-top: 80px;
+  background: #f5f5f5; /* match other admin pages */
+  padding-top: 0;      /* let AdminLayout's padding control top offset */
 }
 
 .admin-cp-applications-container,
 .admin-cp-list-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem 2rem 2rem; /* slightly tighter top padding to match investments */
 }
 
 /* Headers */
@@ -81,14 +81,13 @@
   border: 2px solid #e0e0e0;
   border-radius: 12px;
   padding: 1.5rem;
-  text-align: center;
+  display: flex;              /* match investment cards */
+  align-items: center;
+  gap: 1.25rem;
   transition: all 0.3s ease;
 }
 
 .cp-stat-card-admin {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   text-align: left;
 }
 
@@ -122,18 +121,19 @@
 
 .stat-value-admin,
 .cp-stat-value-admin {
-  font-size: 2.5rem;
+  font-size: 1.5rem;          /* align with investment stats */
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .stat-label-admin,
 .cp-stat-label-admin {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #666;
   font-weight: 600;
   text-transform: uppercase;
-  margin-top: 0.5rem;
+  letter-spacing: 0.5px;
+  margin-top: 0.25rem;
 }
 
 .stat-icon-check,

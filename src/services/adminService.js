@@ -228,6 +228,16 @@ const adminService = {
     return response.data;
   },
 
+  getDocumentProperties: async () => {
+    const response = await api.get('/admin/documents/properties/');
+    return response.data;
+  },
+
+  deleteUser: async (userId) => {
+    const response = await api.delete('/admin/users/' + userId + '/delete/');
+    return response.data;
+  },
+
   // ========================================
   // UNIT MANAGEMENT
   // ========================================
@@ -279,13 +289,14 @@ const adminService = {
   getInvestments: async (filters = {}) => {
     const params = new URLSearchParams(filters);
     const response = await api.get(`/admin/investments/?${params}`);
+    const data = response.data;
 
+    // Handles both non-paginated (array) and paginated responses
+    const results = Array.isArray(data) ? data : (data.results || []);
     return {
       success: true,
-      results: response.data.results || response.data,
-      count: response.data.count || 0,
-      next: response.data.next,
-      previous: response.data.previous,
+      results,
+      count: Array.isArray(data) ? data.length : (data.count || 0),
     };
   },
 

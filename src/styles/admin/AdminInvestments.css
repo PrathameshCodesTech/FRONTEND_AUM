@@ -8,10 +8,32 @@
   margin: 0 auto;
 }
 
+/* ── Page-header scoping: hide any stray second children that leak from other pages ── */
+.admin-investments-page .page-header > :nth-child(n+2) {
+  display: none !important;
+}
+
+/* Hide leaked status/filter chip groups from other admin pages on this route */
+.admin-investments-page .filters,
+.admin-investments-page .commission-filters,
+.admin-investments-page .status-tabs-admin,
+.admin-investments-page .filter-tabs-cp-list {
+  display: none !important;
+}
+
+/* Route-level guard: if another admin component remains mounted, suppress its filter chips */
+.admin-content:has(.admin-investments-page) .filters,
+.admin-content:has(.admin-investments-page) .commission-filters,
+.admin-content:has(.admin-investments-page) .status-tabs-admin,
+.admin-content:has(.admin-investments-page) .filter-tabs-cp-list,
+.admin-content:has(.admin-investments-page) .filter-btn {
+  display: none !important;
+}
+
 /* Investment Stats */
 .investment-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -76,6 +98,14 @@
   margin-top: 0.25rem;
 }
 
+/* Plain status text for investments list (no pill chip) */
+.admin-investments-page .status-cell .status-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: capitalize;
+}
+
 .info-value-detail.highlight {
   color: #667eea;
   font-size: 1.1rem;
@@ -124,24 +154,85 @@
   margin: 0;
 }
 
+/* Filters — scoped override to prevent AdminUsers.css from column-stacking these */
+.admin-investments-page .page-filters {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-investments-page .filter-group {
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.admin-investments-page .filter-search,
+.admin-investments-page .filter-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.admin-investments-page .filter-search:focus,
+.admin-investments-page .filter-select:focus {
+  border-color: #667eea;
+}
+
+.admin-investments-page .filter-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-investments-page .btn-filter-reset {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.admin-investments-page .btn-filter-reset:hover {
+  background: #e0e0e0;
+}
+
 /* Responsive */
-
-/* ✅ FORCE 4 COLUMNS ON LARGER SCREENS */
-@media (min-width: 1201px) {
-  .investment-stats {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-}
-
-@media (max-width: 1200px) {
-  .investment-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
 
 @media (max-width: 768px) {
   .investment-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .admin-investments-page .page-filters {
+    flex-direction: column !important;
+  }
+
+  .admin-investments-page .filter-group {
+    max-width: 100%;
   }
   
   .admin-investment-detail-page .detail-header {
@@ -755,4 +846,59 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+.investments-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.pagination-btn.active {
+  background: #111827;
+  border-color: #111827;
+  color: #fff;
+  font-weight: 600;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }

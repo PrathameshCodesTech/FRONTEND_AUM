@@ -86,7 +86,7 @@ const AdminRoutes = () => {
           path="investments/:investmentId"
           element={<AdminInvestmentDetail />}
         />
-        <Route path="/admin/commissions" element={<AdminCommissions />} />
+        <Route path="commissions" element={<AdminCommissions />} />
 
         {/* Document Storage */}
         <Route path="documents" element={<AdminDocuments />} />

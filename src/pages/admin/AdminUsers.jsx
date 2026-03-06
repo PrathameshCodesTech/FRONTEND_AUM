@@ -177,6 +177,19 @@ const fetchUsers = async () => {
     }
   ];
 
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm('Delete user "' + user.username + '" and all their investments? This cannot be undone.')) return;
+    try {
+      const res = await adminService.deleteUser(user.id);
+      if (res.success) {
+        toast.success(res.message);
+        fetchUsers();
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to delete user');
+    }
+  };
+
   const renderActions = (user) => (
     <div className="table-actions">
       <button
@@ -229,6 +242,21 @@ const fetchUsers = async () => {
           ▶
         </button>
       )}
+
+      <button
+        className="btn-action btn-delete"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDeleteUser(user);
+        }}
+        title="Delete User"
+        style={{ background: '#fef2f2', color: '#ef4444', border: 'none' }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6L18.1017 19.1493C18.0442 19.9019 17.4 20.5 16.6457 20.5H7.35432C6.59999 20.5 5.95579 19.9019 5.89833 19.1493L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </button>
     </div>
   );
 

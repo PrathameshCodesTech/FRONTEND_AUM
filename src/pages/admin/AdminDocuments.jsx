@@ -3,6 +3,12 @@ import toast from 'react-hot-toast';
 import adminService from '../../services/adminService';
 import '../../styles/admin/AdminDocuments.css';
 
+const TABS = [
+  { id: 'COMMON', label: 'Common Documents' },
+  { id: 'INDIVIDUAL', label: 'Individual Documents' },
+  { id: 'PROPERTY', label: 'Property Documents' },
+];
+
 const AdminDocuments = () => {
   const [activeTab, setActiveTab] = useState('COMMON');
   const [documents, setDocuments] = useState([]);
@@ -10,6 +16,7 @@ const AdminDocuments = () => {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [properties, setProperties] = useState([]);
   const [userSearch, setUserSearch] = useState('');
   const fileInputRef = useRef(null);
 
@@ -17,7 +24,8 @@ const AdminDocuments = () => {
     title: '',
     description: '',
     files: [],
-    shared_with: [], // array of user IDs (PROJECT type only)
+    shared_with: [],   // for INDIVIDUAL
+    property_id: '',   // for PROPERTY
   });
 
   useEffect(() => {
@@ -25,9 +33,8 @@ const AdminDocuments = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'PROJECT') {
-      fetchUsers();
-    }
+    if (activeTab === 'INDIVIDUAL') fetchUsers();
+    if (activeTab === 'PROPERTY') fetchProperties();
   }, [activeTab]);
 
   const fetchDocuments = async () => {
@@ -46,9 +53,14 @@ const AdminDocuments = () => {
     try {
       const res = await adminService.getDocumentUsers();
       if (res.success) setUsers(res.data);
-    } catch {
-      console.error('Failed to fetch users');
-    }
+    } catch { console.error('Failed to fetch users'); }
+  };
+
+  const fetchProperties = async () => {
+    try {
+      const res = await adminService.getDocumentProperties();
+      if (res.success) setProperties(res.data);
+    } catch { console.error('Failed to fetch properties'); }
   };
 
   const handleFormChange = (e) => {
@@ -70,7 +82,7 @@ const AdminDocuments = () => {
   };
 
   const resetForm = () => {
-    setForm({ title: '', description: '', files: [], shared_with: [] });
+    setForm({ title: '', description: '', files: [], shared_with: [], property_id: '' });
     setUserSearch('');
     if (fileInputRef.current) fileInputRef.current.value = '';
     setShowUploadForm(false);
@@ -80,9 +92,10 @@ const AdminDocuments = () => {
     e.preventDefault();
     if (!form.title.trim()) return toast.error('Title is required');
     if (form.files.length === 0) return toast.error('Select at least one file');
-    if (activeTab === 'PROJECT' && form.shared_with.length === 0) {
-      return toast.error('Select at least one user for Project documents');
-    }
+    if (activeTab === 'INDIVIDUAL' && form.shared_with.length === 0)
+      return toast.error('Select at least one user');
+    if (activeTab === 'PROPERTY' && !form.property_id)
+      return toast.error('Select a property');
 
     setUploading(true);
     try {
@@ -91,9 +104,10 @@ const AdminDocuments = () => {
       fd.append('description', form.description.trim());
       fd.append('document_type', activeTab);
       form.files.forEach(f => fd.append('files', f));
-      if (activeTab === 'PROJECT') {
+      if (activeTab === 'INDIVIDUAL')
         fd.append('shared_with', JSON.stringify(form.shared_with));
-      }
+      if (activeTab === 'PROPERTY')
+        fd.append('property_id', form.property_id);
 
       const res = await adminService.uploadStorageDocuments(fd);
       if (res.success) {
@@ -143,16 +157,14 @@ const AdminDocuments = () => {
 
       {/* Tabs */}
       <div className="admin-doc-tabs">
-        {['COMMON', 'PROJECT'].map(tab => (
+        {TABS.map(tab => (
           <button
-            key={tab}
-            className={`admin-doc-tab${activeTab === tab ? ' active' : ''}`}
-            onClick={() => { setActiveTab(tab); setShowUploadForm(false); resetForm(); }}
+            key={tab.id}
+            className={`admin-doc-tab${activeTab === tab.id ? ' active' : ''}`}
+            onClick={() => { setActiveTab(tab.id); setShowUploadForm(false); resetForm(); }}
           >
-            {tab === 'COMMON' ? 'Common Documents' : 'Project Documents'}
-            <span className="tab-badge">
-              {tab === activeTab ? documents.length : ''}
-            </span>
+            {tab.label}
+            <span className="tab-badge">{tab.id === activeTab ? documents.length : ''}</span>
           </button>
         ))}
       </div>
@@ -162,47 +174,28 @@ const AdminDocuments = () => {
         <div className="admin-doc-upload-form-wrapper">
           <form className="admin-doc-upload-form" onSubmit={handleUpload}>
             <h3 className="upload-form-title">
-              Upload {activeTab === 'COMMON' ? 'Common' : 'Project'} Documents
+              Upload {TABS.find(t => t.id === activeTab)?.label}
             </h3>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Title <span className="required">*</span></label>
-                <input
-                  type="text"
-                  name="title"
-                  value={form.title}
-                  onChange={handleFormChange}
-                  placeholder="Document title"
-                />
+                <input type="text" name="title" value={form.title} onChange={handleFormChange} placeholder="Document title" />
               </div>
               <div className="form-group">
                 <label>Description</label>
-                <input
-                  type="text"
-                  name="description"
-                  value={form.description}
-                  onChange={handleFormChange}
-                  placeholder="Optional description"
-                />
+                <input type="text" name="description" value={form.description} onChange={handleFormChange} placeholder="Optional description" />
               </div>
             </div>
 
             <div className="form-group">
               <label>Files <span className="required">*</span></label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFilesChange}
-              />
-              {form.files.length > 0 && (
-                <p className="files-selected">{form.files.length} file(s) selected</p>
-              )}
+              <input ref={fileInputRef} type="file" multiple onChange={handleFilesChange} />
+              {form.files.length > 0 && <p className="files-selected">{form.files.length} file(s) selected</p>}
             </div>
 
-            {/* User multi-select for PROJECT type */}
-            {activeTab === 'PROJECT' && (
+            {/* INDIVIDUAL: user multi-select */}
+            {activeTab === 'INDIVIDUAL' && (
               <div className="form-group user-select-group">
                 <label>Share With Users <span className="required">*</span></label>
                 <input
@@ -215,25 +208,33 @@ const AdminDocuments = () => {
                 <div className="user-select-list">
                   {filteredUsers.length === 0 ? (
                     <p className="no-users-text">No users found</p>
-                  ) : (
-                    filteredUsers.map(u => (
-                      <label key={u.id} className={`user-select-item${form.shared_with.includes(u.id) ? ' selected' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={form.shared_with.includes(u.id)}
-                          onChange={() => toggleUser(u.id)}
-                        />
-                        <div className="user-select-info">
-                          <span className="user-select-name">{u.name}</span>
-                          <span className="user-select-email">{u.email}</span>
-                        </div>
-                      </label>
-                    ))
-                  )}
+                  ) : filteredUsers.map(u => (
+                    <label key={u.id} className={`user-select-item${form.shared_with.includes(u.id) ? ' selected' : ''}`}>
+                      <input type="checkbox" checked={form.shared_with.includes(u.id)} onChange={() => toggleUser(u.id)} />
+                      <div className="user-select-info">
+                        <span className="user-select-name">{u.name}</span>
+                        <span className="user-select-email">{u.email}</span>
+                      </div>
+                    </label>
+                  ))}
                 </div>
                 {form.shared_with.length > 0 && (
                   <p className="users-selected-count">{form.shared_with.length} user(s) selected</p>
                 )}
+              </div>
+            )}
+
+            {/* PROPERTY: property dropdown */}
+            {activeTab === 'PROPERTY' && (
+              <div className="form-group">
+                <label>Property <span className="required">*</span></label>
+                <select name="property_id" value={form.property_id} onChange={handleFormChange}>
+                  <option value="">Select property...</option>
+                  {properties.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <p className="property-help-text">All investors of this property will see the document</p>
               </div>
             )}
 
@@ -258,7 +259,7 @@ const AdminDocuments = () => {
                 stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M14 2V8H20" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p>No {activeTab === 'COMMON' ? 'common' : 'project'} documents yet</p>
+            <p>No documents yet in this category</p>
           </div>
         ) : (
           <div className="admin-doc-grid">
@@ -278,28 +279,21 @@ const AdminDocuments = () => {
                     <span className="admin-doc-filename">{doc.file_name}</span>
                     <span className="admin-doc-date">{formatDate(doc.created_at)}</span>
                   </div>
-                  {activeTab === 'PROJECT' && doc.shared_with_ids?.length > 0 && (
+                  {activeTab === 'INDIVIDUAL' && doc.shared_with_ids?.length > 0 && (
                     <p className="admin-doc-shared">Shared with {doc.shared_with_ids.length} user(s)</p>
+                  )}
+                  {activeTab === 'PROPERTY' && doc.property_name && (
+                    <p className="admin-doc-shared">Property: {doc.property_name}</p>
                   )}
                 </div>
                 <div className="admin-doc-card-actions">
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-doc-view"
-                    title="View"
-                  >
+                  <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="btn-doc-view" title="View">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                   </a>
-                  <button
-                    className="btn-doc-delete"
-                    onClick={() => handleDelete(doc.id)}
-                    title="Delete"
-                  >
+                  <button className="btn-doc-delete" onClick={() => handleDelete(doc.id)} title="Delete">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                       <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6L18.1017 19.1493C18.0442 19.9019 17.4 20.5 16.6457 20.5H7.35432C6.59999 20.5 5.95579 19.9019 5.89833 19.1493L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
