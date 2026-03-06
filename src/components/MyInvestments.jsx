@@ -649,6 +649,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import investmentService from '../services/investmentService';
 import PropertyCard from '../components/PropertyCard';
+import assetKartLogo from '../assets/AssetKart-1.png';
 import '../styles/MyInvestments.css';
 
 const MyInvestments = () => {
@@ -683,6 +684,9 @@ const MyInvestments = () => {
   // Receipt Modal State
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [receiptModalSource, setReceiptModalSource] = useState('history'); // 'transaction' | 'history'
+  const [receiptPaymentHistory, setReceiptPaymentHistory] = useState([]);
+  const [loadingReceiptHistory, setLoadingReceiptHistory] = useState(false);
 
   // Payment History Modal State
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
@@ -727,8 +731,9 @@ const MyInvestments = () => {
         });
         
         if (dueSoon.length > 0) {
-          toast.warning(`⏰ ${dueSoon.length} payment(s) due within 3 days!`, {
-            duration: 4000
+          toast(`⏰ ${dueSoon.length} payment(s) due within 3 days!`, {
+            duration: 4000,
+            icon: '⚠️',
           });
         }
       }
@@ -919,12 +924,12 @@ const MyInvestments = () => {
     }
   };
 
-  const handleDownloadReceipt = async (receipt) => {
+  const handleDownloadReceipt = async (receipt, source = 'all') => {
     try {
       toast.loading('Generating receipt...', { id: 'download-receipt' });
-      
-      const response = await investmentService.downloadReceipt(receipt.id);
-      
+
+      const response = await investmentService.downloadReceipt(receipt.id, source);
+
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -934,7 +939,7 @@ const MyInvestments = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success('Receipt downloaded successfully', { id: 'download-receipt' });
     } catch (error) {
       console.error('Download error:', error);
@@ -942,9 +947,25 @@ const MyInvestments = () => {
     }
   };
 
-  const handleViewReceipt = (receipt) => {
+  const handleViewReceipt = async (receipt, source = 'history') => {
     setSelectedReceipt(receipt);
+    setReceiptModalSource(source);
     setShowReceiptModal(true);
+
+    if (source === 'transaction') {
+      setReceiptPaymentHistory([]);
+      setLoadingReceiptHistory(true);
+      try {
+        const response = await investmentService.getInvestmentPayments(receipt.id);
+        if (response.success) {
+          setReceiptPaymentHistory(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load receipt payment history:', error);
+      } finally {
+        setLoadingReceiptHistory(false);
+      }
+    }
   };
 
   return (
@@ -1106,17 +1127,7 @@ const MyInvestments = () => {
                         <span className="detail-label">Shares Purchased:</span>
                         <span className="detail-value">{receipt.units_purchased}</span>
                       </div>
-                      
-                      <div className="detail-row">
-                        <span className="detail-label">Payment Method:</span>
-                        <span className="detail-value">{receipt.payment_method_display || receipt.payment_method || 'Online'}</span>
-                      </div>
-                      
-                      <div className="detail-row">
-                        <span className="detail-label">Transaction ID:</span>
-                        <span className="detail-value">{receipt.transaction_id || 'N/A'}</span>
-                      </div>
-                      
+
                       <div className="detail-row">
                         <span className="detail-label">Status:</span>
                         <span className={`status-badge ${receipt.status}`}>
@@ -1126,9 +1137,9 @@ const MyInvestments = () => {
                     </div>
 
                     <div className="receipt-actions">
-                      <button 
+                      <button
                         className="btn-download-receipt"
-                        onClick={() => handleDownloadReceipt(receipt)}
+                        onClick={() => handleDownloadReceipt(receipt, 'transaction')}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <path d="M21 15V19C21 19.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V16" 
@@ -1138,9 +1149,9 @@ const MyInvestments = () => {
                         </svg>
                         Download PDF
                       </button>
-                      <button 
+                      <button
                         className="btn-view-receipt"
-                        onClick={() => handleViewReceipt(receipt)}
+                        onClick={() => handleViewReceipt(receipt, 'transaction')}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1636,6 +1647,10 @@ const MyInvestments = () => {
 
             {/* Receipt Preview — matches PDF layout */}
             <div className="receipt-preview">
+              {/* Logo */}
+              <div className="receipt-logo-wrapper">
+                <img src={assetKartLogo} alt="AssetKart" className="receipt-logo" />
+              </div>
               {/* Title */}
               <h2 className="receipt-preview-title">PAYMENT RECEIPT</h2>
               <hr className="receipt-divider" />
@@ -1649,36 +1664,104 @@ const MyInvestments = () => {
               {/* Received from */}
               <p className="receipt-from-line">
                 Received with thanks from <strong>Mr./Ms. {selectedReceipt.customer_name || selectedReceipt.customer?.name || 'Customer'}</strong>
-                &nbsp;&nbsp; the sum of <strong>&#8377; {Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+                &nbsp;&nbsp; the sum of <strong>Rs. {Number(selectedReceipt.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
               </p>
 
               {/* Towards + Project */}
               <p className="receipt-towards"><strong>Towards:</strong> &nbsp;{selectedReceipt.property?.name}</p>
               <p className="receipt-towards"><strong>Project Name:</strong> &nbsp;{selectedReceipt.property?.name}</p>
 
-              {/* Payment Details Table */}
-              <table className="receipt-payment-table">
-                <tbody>
-                  <tr>
-                    <td className="receipt-table-label">Mode of Payment</td>
-                    <td className="receipt-table-value">{selectedReceipt.payment_method_display || selectedReceipt.payment_method || 'N/A'}</td>
-                  </tr>
-                  <tr>
-                    <td className="receipt-table-label">Transaction / Reference No.</td>
-                    <td className="receipt-table-value">{selectedReceipt.transaction_id || selectedReceipt.transaction_no || 'N/A'}</td>
-                  </tr>
-                  <tr>
-                    <td className="receipt-table-label">Dated</td>
-                    <td className="receipt-table-value">{formatDate(selectedReceipt.payment_date || selectedReceipt.cheque_date || selectedReceipt.approved_at)}</td>
-                  </tr>
-                  <tr>
-                    <td className="receipt-table-label">Bank</td>
-                    <td className="receipt-table-value">{selectedReceipt.bank_name || 'N/A'}</td>
-                  </tr>
-                </tbody>
-              </table>
+              {/* Payment Details Table (All Investments tab) OR History (Transactions tab) */}
+              {receiptModalSource === 'history' ? (
+                <>
+                  <table className="receipt-payment-table">
+                    <tbody>
+                      <tr>
+                        <td className="receipt-table-label">Mode of Payment</td>
+                        <td className="receipt-table-value">{selectedReceipt.payment_method_display || selectedReceipt.payment_method || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td className="receipt-table-label">Transaction / Reference No.</td>
+                        <td className="receipt-table-value">{selectedReceipt.transaction_id || selectedReceipt.transaction_no || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td className="receipt-table-label">Dated</td>
+                        <td className="receipt-table-value">{formatDate(selectedReceipt.payment_date || selectedReceipt.cheque_date || selectedReceipt.approved_at)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p className="receipt-ack-text">This receipt is issued as an acknowledgement of payment received.</p>
+                </>
+              ) : (
+                <div className="receipt-history-section">
+                  <h4 className="receipt-history-title">Payment History</h4>
+                  {loadingReceiptHistory ? (
+                    <p className="receipt-history-loading">Loading history...</p>
+                  ) : (
+                    <div className="receipt-history-list">
+                      {/* Initial payment */}
+                      <div className="receipt-history-item">
+                        <div className="receipt-history-item-header">
+                          <span className="receipt-instalment-badge">Instalment #1</span>
+                          <span className={`receipt-status-badge ${selectedReceipt.payment_status || 'VERIFIED'}`}>
+                            {selectedReceipt.payment_status || 'VERIFIED'}
+                          </span>
+                        </div>
+                        <div className="receipt-history-item-row">
+                          <span>Amount:</span>
+                          <strong>
+                            {formatCurrency(
+                              receiptPaymentHistory.length > 0
+                                ? parseFloat(selectedReceipt.minimum_required_amount || 0) - parseFloat(receiptPaymentHistory[0].due_amount_before || 0)
+                                : parseFloat(selectedReceipt.amount || 0)
+                            )}
+                          </strong>
+                        </div>
+                        <div className="receipt-history-item-row">
+                          <span>Method:</span>
+                          <span>{selectedReceipt.payment_method_display || selectedReceipt.payment_method || 'N/A'}</span>
+                        </div>
+                        <div className="receipt-history-item-row">
+                          <span>Date:</span>
+                          <span>{formatDate(selectedReceipt.payment_date || selectedReceipt.investment_date)}</span>
+                        </div>
+                      </div>
 
-              <p className="receipt-ack-text">This receipt is issued as an acknowledgement of payment received.</p>
+                      {/* Instalment payments */}
+                      {receiptPaymentHistory.length === 0 ? (
+                        <p className="receipt-no-instalments">No additional instalment payments.</p>
+                      ) : (
+                        receiptPaymentHistory.map((payment) => (
+                          <div key={payment.id} className="receipt-history-item">
+                            <div className="receipt-history-item-header">
+                              <span className="receipt-instalment-badge">Instalment #{payment.payment_number}</span>
+                              <span className={`receipt-status-badge ${payment.payment_status}`}>
+                                {payment.payment_status_display || payment.payment_status}
+                              </span>
+                            </div>
+                            <div className="receipt-history-item-row">
+                              <span>Amount:</span>
+                              <strong>{formatCurrency(payment.amount)}</strong>
+                            </div>
+                            <div className="receipt-history-item-row">
+                              <span>Method:</span>
+                              <span>{payment.payment_method_display || payment.payment_method || 'N/A'}</span>
+                            </div>
+                            <div className="receipt-history-item-row">
+                              <span>Date:</span>
+                              <span>{formatDate(payment.payment_date || payment.created_at)}</span>
+                            </div>
+                            {payment.payment_status === 'FAILED' && payment.payment_rejection_reason && (
+                              <p className="receipt-rejection-reason">Rejected: {payment.payment_rejection_reason}</p>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                  <p className="receipt-ack-text">This receipt is issued as an acknowledgement of payment received.</p>
+                </div>
+              )}
 
               {/* Partial payment info (extra, below main layout) */}
               {selectedReceipt.is_partial_payment && (
@@ -1713,7 +1796,7 @@ const MyInvestments = () => {
             </div>
 
             <div className="receipt-modal-actions">
-              <button className="btn-download-receipt" onClick={() => handleDownloadReceipt(selectedReceipt)}>
+              <button className="btn-download-receipt" onClick={() => handleDownloadReceipt(selectedReceipt, receiptModalSource === 'transaction' ? 'transaction' : 'all')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M21 15V19C21 19.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V16"
                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

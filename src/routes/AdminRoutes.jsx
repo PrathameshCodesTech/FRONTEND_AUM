@@ -16,6 +16,7 @@ import AdminCommissions from '../pages/admin/AdminCommissions';
 import AdminCPRoutes from './AdminCPRoutes'; // Add this import
 import AdminUserCreation from '../pages/admin/AdminUserCreation';
 import AdminUserInvestment from "../pages/admin/AdminUserInvestment";
+import AdminDocuments from '../pages/admin/AdminDocuments';
 // Protected Route Component
 const ProtectedAdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -86,6 +87,9 @@ const AdminRoutes = () => {
           element={<AdminInvestmentDetail />}
         />
         <Route path="/admin/commissions" element={<AdminCommissions />} />
+
+        {/* Document Storage */}
+        <Route path="documents" element={<AdminDocuments />} />
 
         {/* CP Routes */}
         <Route path="cp/*" element={<AdminCPRoutes />} />

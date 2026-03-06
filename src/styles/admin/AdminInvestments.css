@@ -665,3 +665,94 @@
 }
 
 .req { color: #ef4444; }
+
+/* Soft delete / Restore */
+.status-badge-deleted {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-investments-page .btn-action.btn-delete {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.admin-investments-page .btn-action.btn-delete:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.admin-investments-page .btn-action.btn-restore {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.admin-investments-page .btn-action.btn-restore:hover {
+  background: #16a34a;
+  color: white;
+}
+
+.filter-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filter-checkbox-label input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* Detail page: Soft Delete / Restore buttons */
+.admin-investment-detail-page .btn-action-detail.btn-soft-delete {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 2px solid #fecaca;
+}
+
+.admin-investment-detail-page .btn-action-detail.btn-soft-delete:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.admin-investment-detail-page .btn-action-detail.btn-restore {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 2px solid #bbf7d0;
+}
+
+.admin-investment-detail-page .btn-action-detail.btn-restore:hover {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.detail-deleted-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: #991b1b;
+}
+
+.detail-deleted-badge {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

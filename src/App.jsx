@@ -18,6 +18,7 @@ import Wishlist from './pages/Wishlist';
 import PropertyAnalytics from './pages/PropertyAnalytics';
 import PortfolioAnalytics from './pages/PortfolioAnalytics';
 import MyInvestments from './components/MyInvestments';
+import UserDocuments from './components/UserDocuments';
 import './App.css';
 import './styles/GlobalSizingAdjustments.css';
 
@@ -92,6 +93,7 @@ function App() {
                     />
 
                     <Route path="/my-investments" element={<ProtectedRoute><MyInvestments /></ProtectedRoute>} />
+                    <Route path="/documents" element={<ProtectedRoute><UserDocuments /></ProtectedRoute>} />
                     
                     <Route 
                       path="/properties" 

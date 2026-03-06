@@ -1,0 +1,116 @@
+/* Documents page – same layout and spacing as My Investments (first image) */
+.documents-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding: 100px 2rem 2rem 2rem;
+}
+
+.documents-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Document cards – same card look as investment cards (white, border, radius) */
+.documents-grid.investments-grid {
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+}
+
+.document-card.investment-card {
+  padding: 0;
+}
+
+.document-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.document-card-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f9ff;
+  color: #0284c7;
+  border-radius: 10px;
+}
+
+.document-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.document-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem;
+}
+
+.document-card-desc {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
+.document-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.document-file-type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.document-filename {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-family: ui-monospace, monospace;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-date {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.document-download-btn.btn-explore {
+  flex-shrink: 0;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .documents-page {
+    padding: 90px 1rem 1rem 1rem;
+  }
+
+  .documents-grid.investments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .document-card-inner {
+    flex-wrap: wrap;
+  }
+
+  .document-download-btn.btn-explore {
+    width: 100%;
+    justify-content: center;
+  }
+}

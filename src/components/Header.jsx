@@ -97,9 +97,14 @@ const Header = () => {
   </Link>
 
   {isAuthenticated && (
-    <Link to="/portfolio" className={`nav-link ${location.pathname === '/portfolio' ? 'active' : ''}`}>
-      Portfolio
-    </Link>
+    <>
+      <Link to="/portfolio" className={`nav-link ${location.pathname === '/portfolio' ? 'active' : ''}`}>
+        Portfolio
+      </Link>
+      <Link to="/documents" className={`nav-link ${location.pathname === '/documents' ? 'active' : ''}`}>
+        Documents
+      </Link>
+    </>
   )}
   
             

@@ -290,6 +290,12 @@ const Sidebar = () => {
       path: '/wishlist'
     },
     {
+      id: 'documents',
+      icon: 'documents',
+      label: 'Documents',
+      path: '/documents'
+    },
+    {
       id: 'profile',
       icon: 'profile',
       label: 'My Profile',
@@ -396,6 +402,15 @@ const Sidebar = () => {
       wishlist: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.57831 8.50903 2.99871 7.05 2.99871C5.59096 2.99871 4.19169 3.57831 3.16 4.61C2.1283 5.64169 1.54871 7.04097 1.54871 8.5C1.54871 9.95903 2.1283 11.3583 3.16 12.39L4.22 13.45L12 21.23L19.78 13.45L20.84 12.39C21.351 11.8792 21.7564 11.2728 22.0329 10.6054C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39464C21.7564 5.72718 21.351 5.12075 20.84 4.61V4.61Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      documents: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M22 19C22 19.5304 21.7893 20.0391 21.4142 20.4142C21.0391 20.7893 20.5304 21 20 21H4C3.46957 21 2.96086 20.7893 2.58579 20.4142C2.21071 20.0391 2 19.5304 2 19V5C2 4.46957 2.21071 3.96086 2.58579 3.58579C2.96086 3.21071 3.46957 3 4 3H9L11 6H20C20.5304 6 21.0391 6.21071 21.4142 6.58579C21.7893 6.96086 22 7.46957 22 8V19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
         </svg>
       ),
       overview: (

@@ -130,6 +130,11 @@ const AdminInvestmentDetail = () => {
         title: 'Cancel Investment',
         message: `Are you sure you want to cancel investment #${investment.investment_id}? Units will be returned to property.`,
         requireReason: true
+      },
+      soft_delete: {
+        title: 'Soft Delete',
+        message: `Soft delete investment #${investment.investment_id}? It will be hidden from the user but kept in the system. You can restore it later.`,
+        requireReason: false
       }
     };
 
@@ -142,8 +147,18 @@ const AdminInvestmentDetail = () => {
 
   const handleInvestmentAction = async (reason) => {
     setActionLoading(true);
-    
+
     try {
+      if (actionModal.action === 'soft_delete') {
+        const response = await adminService.softDeleteInvestment(investmentId);
+        if (response.success) {
+          toast.success(response.message);
+          setActionModal({ ...actionModal, isOpen: false });
+          fetchInvestmentDetail();
+        }
+        return;
+      }
+
       const response = await adminService.investmentAction(
         investmentId,
         actionModal.action,
@@ -152,13 +167,26 @@ const AdminInvestmentDetail = () => {
 
       if (response.success) {
         toast.success(response.message);
-        setInvestment(response.data);
+        setInvestment(response.data || investment);
         setActionModal({ ...actionModal, isOpen: false });
+        fetchInvestmentDetail();
       }
     } catch (error) {
-      toast.error(error.message || 'Action failed');
+      toast.error(error?.response?.data?.message || error.message || 'Action failed');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      const response = await adminService.restoreInvestment(investmentId);
+      if (response.success) {
+        toast.success(response.message);
+        fetchInvestmentDetail();
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || 'Restore failed');
     }
   };
 
@@ -459,8 +487,41 @@ const AdminInvestmentDetail = () => {
               Cancel Investment
             </button>
           )}
+
+          {!investment.is_deleted && (
+            <button
+              className="btn-action-detail btn-soft-delete"
+              onClick={() => openActionModal('soft_delete')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6L18.1017 19.1493C18.0442 19.9019 17.4 20.5 16.6457 20.5H7.35432C6.59999 20.5 5.95579 19.9019 5.89833 19.1493L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Soft Delete
+            </button>
+          )}
+
+          {investment.is_deleted && (
+            <button
+              className="btn-action-detail btn-restore"
+              onClick={handleRestore}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M21 3V8H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Restore
+            </button>
+          )}
         </div>
       </div>
+
+      {investment.is_deleted && (
+        <div className="detail-deleted-banner">
+          <span className="detail-deleted-badge">Soft deleted</span>
+          <span>This investment is hidden from the user. Use Restore to make it visible again.</span>
+        </div>
+      )}
 
       {/* Workflow Progress */}
       <InvestmentWorkflowProgress investment={investment} />
@@ -1249,6 +1310,7 @@ const AdminInvestmentDetail = () => {
         requireReason={actionModal.requireReason}
         loading={actionLoading}
         confirmText={
+          actionModal.action === 'soft_delete' ? 'Soft Delete' :
           actionModal.action === 'approve_payment' ? 'Approve Payment' :
           actionModal.action === 'reject_payment' ? 'Reject Payment' :
           actionModal.action === 'approve' ? 'Approve Investment' :
@@ -1257,6 +1319,7 @@ const AdminInvestmentDetail = () => {
           'Cancel Investment'
         }
         confirmColor={
+          actionModal.action === 'soft_delete' ? '#dc3545' :
           actionModal.action === 'approve_payment' ? '#28a745' :
           actionModal.action === 'approve' ? '#28a745' :
           actionModal.action === 'reject_payment' ? '#dc3545' :

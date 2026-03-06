@@ -82,9 +82,10 @@ createInvestmentWithPayment: async (formData) => {
   },
 
   // 🆕 Download receipt PDF
-  downloadReceipt: async (investmentId) => {
+  downloadReceipt: async (investmentId, source = 'all') => {
     try {
-      const response = await api.get(`/wallet/investments/${investmentId}/receipt/download/`, {
+      const params = source === 'transaction' ? '?source=transaction' : '';
+      const response = await api.get(`/wallet/investments/${investmentId}/receipt/download/${params}`, {
         responseType: 'blob',
       });
       return response;

@@ -203,6 +203,32 @@ const adminService = {
   },
 
   // ========================================
+  // DOCUMENT STORAGE MANAGEMENT
+  // ========================================
+  getStorageDocuments: async (type = null) => {
+    const params = type ? `?type=${type}` : '';
+    const response = await api.get(`/admin/documents/${params}`);
+    return response.data;
+  },
+
+  uploadStorageDocuments: async (formData) => {
+    const response = await api.post('/admin/documents/upload/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  deleteStorageDocument: async (id) => {
+    const response = await api.delete(`/admin/documents/${id}/`);
+    return response.data;
+  },
+
+  getDocumentUsers: async () => {
+    const response = await api.get('/admin/documents/users/');
+    return response.data;
+  },
+
+  // ========================================
   // UNIT MANAGEMENT
   // ========================================
   getPropertyUnits: async (propertyId) => {
@@ -275,6 +301,20 @@ const adminService = {
         action,
         rejection_reason: reason,
       }
+    );
+    return response.data;
+  },
+
+  softDeleteInvestment: async (investmentId) => {
+    const response = await api.post(
+      `/admin/investments/${investmentId}/soft-delete/`
+    );
+    return response.data;
+  },
+
+  restoreInvestment: async (investmentId) => {
+    const response = await api.post(
+      `/admin/investments/${investmentId}/restore/`
     );
     return response.data;
   },
